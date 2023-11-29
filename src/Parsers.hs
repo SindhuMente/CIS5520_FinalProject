@@ -11,8 +11,6 @@ import Prelude hiding (filter)
 
 newtype Parser a = P {doParse :: String -> Maybe (a, String)}
 
-
-
 get :: Parser Char
 get = P $ \case
   (c : cs) -> Just (c, cs)
