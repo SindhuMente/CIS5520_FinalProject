@@ -41,6 +41,13 @@ library
       common-stanza
   exposed-modules:
       Lib
+      OldPlayer
+      Player
+      State
+      Parser
+      Parsers
+      ParserCombinators
+      Maze
   hs-source-dirs:
       src
 
