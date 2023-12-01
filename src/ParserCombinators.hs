@@ -6,7 +6,7 @@ module ParserCombinators
     doParse,
     get,
     eof,
-    filter,
+    filterP,
     parse,
     parseFromFile,
     satisfy,
@@ -91,8 +91,8 @@ eof = P $ \case
 --   _ : _ -> Nothing
 
 -- | Filter the parsing results by a predicate
-filter :: (a -> Bool) -> Parser a -> Parser a
-filter f p = P $ \s -> do
+filterP :: (a -> Bool) -> Parser a -> Parser a
+filterP f p = P $ \s -> do
   (c, cs) <- doParse p s
   guard (f c)
   return (c, cs)
@@ -127,7 +127,7 @@ parseFromFile parser filename = do
 
 -- | Return the next character if it satisfies the given predicate
 satisfy :: (Char -> Bool) -> Parser Char
-satisfy p = filter p get
+satisfy p = filterP p get
 
 -- | Parsers for specific sorts of characters
 alpha, digit, upper, lower, space :: Parser Char

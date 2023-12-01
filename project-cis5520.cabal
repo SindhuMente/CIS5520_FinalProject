@@ -41,6 +41,8 @@ library
       common-stanza
   exposed-modules:
       Lib
+      Maze
+      ParserCombinators
   hs-source-dirs:
       src
 

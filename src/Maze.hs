@@ -2,10 +2,12 @@ module Maze where
 
 import Control.Applicative (Alternative (..))
 import Data.Maybe
-import ParserCombinators (Parser, char, doParse, filter, parse, satisfy, string)
+-- import Dfs
+import ParserCombinators (Parser, char, doParse, filterP, parse, satisfy, string)
 import System.IO
 import Test.HUnit (Assertion, Counts, Test (..), assert, runTestTT, (~:), (~?=))
-import Prelude hiding (filter)
+import Test.QuickCheck qualified as QC
+import Prelude
 
 ------------------------------------------------------------------------------------------
 
@@ -18,7 +20,7 @@ data Cell = Cell
     y :: Int,
     isWall :: Bool
   }
-  deriving (Show)
+  deriving (Eq, Show)
 
 data Maze = Maze
   { cells :: [Cell],
@@ -29,10 +31,9 @@ data Maze = Maze
     compasses :: [Cell],
     portals :: [Portal]
   }
-  deriving (Show)
+  deriving (Eq, Show)
 
--- data Portal = Portal Cell Cell deriving (Show)
-data Portal = Portal {entrance :: Cell, exit :: Cell} deriving (Show)
+data Portal = Portal {entrance :: Cell, exit :: Cell} deriving (Eq, Show)
 
 ------------------------------------------------------------------------------------------
 
@@ -60,13 +61,9 @@ newLine = char '\n'
 newLineP :: Parser a -> Parser a
 newLineP p = p <* many newLine
 
--- | Parse an entire ascii maze, rememeber to use `many`
+-- | Parse an entire ascii maze, remember to use `many`
 mazeFileParser :: Parser String
 mazeFileParser = newLineP text
-
--- | Sample string for testing
-sampleString :: String
-sampleString = "00Q0S00P000\n00001000000\nPQ1010101"
 
 -- | Run a parser on a particular input file
 parseFromFile :: Parser a -> String -> IO (Maybe (a, String))
@@ -115,7 +112,7 @@ parseChar (c, col) row maze =
   case c of
     '0' -> addCell row col True
     '1' -> addCell row col False
-    'Q' -> addCoin row col
+    'Q' -> addCell row col False . addCoin row col
     'C' -> addCell row col False . addCompass row col
     'S' -> addCell row col False . setStartPlayerOne row col
     'T' -> addCell row col False . setStartPlayerTwo row col
@@ -141,28 +138,80 @@ parseMaze rows =
 
 ------------------------------------------------------------------------------------------
 
--- >>> parseFromFile (many mazeFileParser) "data/easy.txt"
--- Just (["00Q0S00P000","000010000Q0","Q0001111G00","0Q000011100","00000P10000","00000011Q00","00P00111000","0000010C000","00010T00000"],"")
+-- | a maze file should only contain valid characters
+test_file_has_valid_characters :: Test
+test_file_has_valid_characters =
+  "valid characters" ~: do
+    res <- parseFromFile (many mazeFileParser) "data/easy.txt"
+    case res of
+      Just (mazeString, _) -> assert $ all (all (`elem` ['0', '1', 'Q', 'C', 'P', 'G', 'S', 'T'])) mazeString
+      Nothing -> assert False
 
--- >>> parseFromFile (many mazeFileParser) "data/medium.txt"
--- Just ([],"")
+-- | a game should have exactly 1 goal
+test_exactly_one_goal :: Test
+test_exactly_one_goal =
+  "one goal" ~: do
+    res <- parseFromFile (many mazeFileParser) "data/easy.txt"
+    case res of
+      Just (mazeString, _) -> do
+        let maze = parseMaze mazeString
+        assert $ countGoals maze == 1
+      Nothing -> assert False
 
-bleh :: [String]
-bleh = ["00Q0S000000", "00001000000", "00001111G00", "0Q000011100", "00000110000", "00000011Q00", "00100111000", "0000010C000", "00010T00000"]
+countGoals :: Maze -> Int
+countGoals maze = length $ filter (\cell -> cell == goal maze) (cells maze)
 
--- >>> parseMaze bleh
--- Maze {cells = [Cell {x = 0, y = 0, isWall = True},Cell {x = 0, y = 1, isWall = True},Cell {x = 0, y = 3, isWall = True},Cell {x = 0, y = 4, isWall = False},Cell {x = 0, y = 5, isWall = True},Cell {x = 0, y = 6, isWall = True},Cell {x = 0, y = 7, isWall = True},Cell {x = 0, y = 8, isWall = True},Cell {x = 0, y = 9, isWall = True},Cell {x = 0, y = 10, isWall = True},Cell {x = 1, y = 0, isWall = True},Cell {x = 1, y = 1, isWall = True},Cell {x = 1, y = 2, isWall = True},Cell {x = 1, y = 3, isWall = True},Cell {x = 1, y = 4, isWall = False},Cell {x = 1, y = 5, isWall = True},Cell {x = 1, y = 6, isWall = True},Cell {x = 1, y = 7, isWall = True},Cell {x = 1, y = 8, isWall = True},Cell {x = 1, y = 9, isWall = True},Cell {x = 1, y = 10, isWall = True},Cell {x = 2, y = 0, isWall = True},Cell {x = 2, y = 1, isWall = True},Cell {x = 2, y = 2, isWall = True},Cell {x = 2, y = 3, isWall = True},Cell {x = 2, y = 4, isWall = False},Cell {x = 2, y = 5, isWall = False},Cell {x = 2, y = 6, isWall = False},Cell {x = 2, y = 7, isWall = False},Cell {x = 2, y = 8, isWall = False},Cell {x = 2, y = 9, isWall = True},Cell {x = 2, y = 10, isWall = True},Cell {x = 3, y = 0, isWall = True},Cell {x = 3, y = 2, isWall = True},Cell {x = 3, y = 3, isWall = True},Cell {x = 3, y = 4, isWall = True},Cell {x = 3, y = 5, isWall = True},Cell {x = 3, y = 6, isWall = False},Cell {x = 3, y = 7, isWall = False},Cell {x = 3, y = 8, isWall = False},Cell {x = 3, y = 9, isWall = True},Cell {x = 3, y = 10, isWall = True},Cell {x = 4, y = 0, isWall = True},Cell {x = 4, y = 1, isWall = True},Cell {x = 4, y = 2, isWall = True},Cell {x = 4, y = 3, isWall = True},Cell {x = 4, y = 4, isWall = True},Cell {x = 4, y = 5, isWall = False},Cell {x = 4, y = 6, isWall = False},Cell {x = 4, y = 7, isWall = True},Cell {x = 4, y = 8, isWall = True},Cell {x = 4, y = 9, isWall = True},Cell {x = 4, y = 10, isWall = True},Cell {x = 5, y = 0, isWall = True},Cell {x = 5, y = 1, isWall = True},Cell {x = 5, y = 2, isWall = True},Cell {x = 5, y = 3, isWall = True},Cell {x = 5, y = 4, isWall = True},Cell {x = 5, y = 5, isWall = True},Cell {x = 5, y = 6, isWall = False},Cell {x = 5, y = 7, isWall = False},Cell {x = 5, y = 9, isWall = True},Cell {x = 5, y = 10, isWall = True},Cell {x = 6, y = 0, isWall = True},Cell {x = 6, y = 1, isWall = True},Cell {x = 6, y = 2, isWall = False},Cell {x = 6, y = 3, isWall = True},Cell {x = 6, y = 4, isWall = True},Cell {x = 6, y = 5, isWall = False},Cell {x = 6, y = 6, isWall = False},Cell {x = 6, y = 7, isWall = False},Cell {x = 6, y = 8, isWall = True},Cell {x = 6, y = 9, isWall = True},Cell {x = 6, y = 10, isWall = True},Cell {x = 7, y = 0, isWall = True},Cell {x = 7, y = 1, isWall = True},Cell {x = 7, y = 2, isWall = True},Cell {x = 7, y = 3, isWall = True},Cell {x = 7, y = 4, isWall = True},Cell {x = 7, y = 5, isWall = False},Cell {x = 7, y = 6, isWall = True},Cell {x = 7, y = 7, isWall = False},Cell {x = 7, y = 8, isWall = True},Cell {x = 7, y = 9, isWall = True},Cell {x = 7, y = 10, isWall = True},Cell {x = 8, y = 0, isWall = True},Cell {x = 8, y = 1, isWall = True},Cell {x = 8, y = 2, isWall = True},Cell {x = 8, y = 3, isWall = False},Cell {x = 8, y = 4, isWall = True},Cell {x = 8, y = 5, isWall = False},Cell {x = 8, y = 6, isWall = True},Cell {x = 8, y = 7, isWall = True},Cell {x = 8, y = 8, isWall = True},Cell {x = 8, y = 9, isWall = True},Cell {x = 8, y = 10, isWall = True}], startPlayerOne = Cell {x = 0, y = 4, isWall = False}, startPlayerTwo = Cell {x = 8, y = 5, isWall = False}, goal = Cell {x = 2, y = 8, isWall = False}, coins = [Cell {x = 0, y = 2, isWall = False},Cell {x = 3, y = 1, isWall = False},Cell {x = 5, y = 8, isWall = False}], compasses = [Cell {x = 7, y = 7, isWall = False}], portals = []}
+-- | a game should have 2 starting points, 1 for each player
+test_two_starting_points :: Test
+test_two_starting_points =
+  "two starting points" ~: do
+    res <- parseFromFile (many mazeFileParser) "data/easy.txt"
+    case res of
+      Just (mazeString, _) -> do
+        let maze = parseMaze mazeString
+        assert $ countStartingPoints maze == 2
+      Nothing -> assert False
 
-------------------------------------------------------------------------------------------
+test_easy_size :: Test
+test_easy_size =
+  "easy level size" ~: do
+    res <- parseFromFile (many mazeFileParser) "data/easy.txt"
+    case res of
+      Just (mazeString, _) -> do
+        let maze = parseMaze mazeString
+        print maze
+        assert $ length (cells maze) == 99
+      Nothing -> assert False
 
--- | Updates
+test_easy_goal_pos :: Test
+test_easy_goal_pos =
+  "easy level goal pos" ~: do
+    res <- parseFromFile (many mazeFileParser) "data/easy.txt"
+    case res of
+      Just (mazeString, _) -> do
+        let maze = parseMaze mazeString
+        print maze
+        assert $ goal maze == Cell 2 8 False
+      Nothing -> assert False
 
-{-
-Portals:
-- maze would have no Portals
-- randomGen should pick some set of 1s as entrances, and
-pick others to be destinations:
-- need to consider before which are correct destinations to avoid infinite loops
+-- Function to count the number of starting points in a maze
+countStartingPoints :: Maze -> Int
+countStartingPoints maze =
+  length $ filter (\cell -> cell == startPlayerOne maze || cell == startPlayerTwo maze) (cells maze)
 
--}
-------------------------------------------------------------------------------------------
+test_goal_reachability :: Test
+test_goal_reachability = undefined
+
+test_all :: IO Counts
+test_all =
+  runTestTT $
+    TestList
+      [ test_file_has_valid_characters,
+        test_exactly_one_goal,
+        test_two_starting_points,
+        test_easy_size,
+        test_easy_goal_pos
+      ]
+
+-- >>> test_all
+-- Counts {cases = 5, tried = 5, errors = 0, failures = 0}
