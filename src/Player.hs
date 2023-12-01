@@ -345,17 +345,32 @@ test_switchPlayer :: Test
 test_switchPlayer =
   "Switch Player tests" ~:
     TestList
-      [ compasses (removeCompass (board initGame) Cell {x = 4, y = 3, isWall = False})
-          ~?= []
+      [ switchPlayer One ~?= Two,
+        switchPlayer Two ~?= One
       ]
+
+test_all =
+  runTestTT $
+    TestList
+      [ test_getPortalEntrances,
+        test_moveOne,
+        test_collectCoin,
+        test_removeCoin,
+        test_fetchPortal,
+        test_enterPortal,
+        test_switchPlayer
+      ]
+
+-- >>> test_all
+-- Counts {cases = 8, tried = 8, errors = 0, failures = 0}
 
 --------------- Tests ---------------
 
-prop_compassTokenValidity :: Game -> Game -> Bool
-prop_compassTokenValidity g1 g2 = undefined
+-- prop_compassTokenValidity :: Game -> Game -> Bool
+-- prop_compassTokenValidity g1 g2 = undefined
 
-prop_turnValidity :: Game -> Player -> Action -> Bool
-prop_turnValidity g p a = p == current g
+-- prop_turnValidity :: Game -> Player -> Action -> Bool
+-- prop_turnValidity g p a = p == current g
 
-prop_ActionValidity :: Game -> Player -> Action -> Bool
-prop_ActionValidity g p a = p == current g && undefined
+-- prop_ActionValidity :: Game -> Player -> Action -> Bool
+-- prop_ActionValidity g p a = p == current g && undefined
