@@ -147,7 +147,7 @@ test_file_has_valid_characters =
       Just (mazeString, _) -> assert $ all (all (`elem` ['0', '1', 'Q', 'C', 'P', 'G', 'S', 'T'])) mazeString
       Nothing -> assert False
 
--- | a game should have exactly 1 goal
+-- | a maze should have exactly 1 goal
 test_exactly_one_goal :: Test
 test_exactly_one_goal =
   "one goal" ~: do
@@ -161,7 +161,7 @@ test_exactly_one_goal =
 countGoals :: Maze -> Int
 countGoals maze = length $ filter (\cell -> cell == goal maze) (cells maze)
 
--- | a game should have 2 starting points, 1 for each player
+-- | a maze should have 2 starting points, 1 for each player
 test_two_starting_points :: Test
 test_two_starting_points =
   "two starting points" ~: do
@@ -172,6 +172,7 @@ test_two_starting_points =
         assert $ countStartingPoints maze == 2
       Nothing -> assert False
 
+-- | an easy maze should be of size 99
 test_easy_size :: Test
 test_easy_size =
   "easy level size" ~: do
@@ -183,6 +184,7 @@ test_easy_size =
         assert $ length (cells maze) == 99
       Nothing -> assert False
 
+-- | testing that goal pos was parsed correctly
 test_easy_goal_pos :: Test
 test_easy_goal_pos =
   "easy level goal pos" ~: do
@@ -194,11 +196,12 @@ test_easy_goal_pos =
         assert $ goal maze == Cell 2 8 False
       Nothing -> assert False
 
--- Function to count the number of starting points in a maze
+-- Helper unction to count the number of starting points in a maze
 countStartingPoints :: Maze -> Int
 countStartingPoints maze =
   length $ filter (\cell -> cell == startPlayerOne maze || cell == startPlayerTwo maze) (cells maze)
 
+-- Goal should be reachable from by starting positions
 test_goal_reachability :: Test
 test_goal_reachability = undefined
 
