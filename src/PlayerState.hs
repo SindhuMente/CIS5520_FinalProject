@@ -191,7 +191,9 @@ initialGame =
             goal = Cell {x = -1, y = -1, isWall = True},
             coins = [],
             compasses = [],
-            portals = []
+            portals = [],
+            rows = 1,
+            cols = 1
           },
       current = One,
       playerInfo =
@@ -230,23 +232,35 @@ playGame emptyGame = do
   difficulty <- getLine
   case difficulty of
     "easy" -> do
-      initMaze <- P.parseFromFile (many mazeFileParser) "src/testMaze.txt"
-      getMaze initMaze
-    "medium" -> undefined
-    "hard" -> undefined
+      initMaze <- P.parseFromFile (many mazeFileParser) "data/easy.txt"
+      getMaze initMaze "data/easy_portals.txt"
+    "medium" -> do
+      initMaze <- P.parseFromFile (many mazeFileParser) "data/medium.txt"
+      getMaze initMaze "data/medium_portals.txt"
+    "hard" -> do
+      initMaze <- P.parseFromFile (many mazeFileParser) "data/hard.txt"
+      getMaze initMaze "data/hard_portals.txt"
     "quit" -> return ()
     _ -> do
       putStrLn "invalid difficulty level, please try again!"
       playGame initialGame
   where
-    getMaze initMaze =
+    getMaze initMaze fName =
       case initMaze of
         Just (rawMaze, s) -> do
-          let maze = parseMaze rawMaze
-           in let game = initializeGameState emptyGame maze
-               in do
-                    print maze
-                    go game
+          portalsRes <- P.parseFromFile P.portalFileParser fName
+          case portalsRes of
+            Just (portalsList, _) -> do
+              -- putStrLn (show (portalsList)) -- here for debugging purposes
+              let maze = parseMaze rawMaze
+               in let updatedMaze = maze {portals = portalsList}
+                   in let game = initializeGameState emptyGame updatedMaze
+                       in do
+                            -- print (board game) -- here for debugging purposes
+                            go game
+            _ -> do
+              putStrLn "error loading maze, please try again later"
+              return ()
         _ -> do
           putStrLn "error loading maze, please try again later"
           return ()
