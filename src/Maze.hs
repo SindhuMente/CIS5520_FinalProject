@@ -1,9 +1,31 @@
 module Maze where
 
 import Control.Applicative (Alternative (..))
+import Control.Monad (ap, foldM, liftM, replicateM, replicateM_, unless, when)
+import Data.Char (isAlpha, isDigit, isLower, isSpace, isUpper)
+import Data.List qualified as List
+import Data.Map (Map, (!?))
+import Data.Map qualified as M
 import Data.Maybe
 -- import Dfs
-import ParserCombinators (Parser, char, doParse, filterP, parse, satisfy, string)
+import ParserCombinators
+  ( Parser,
+    alpha,
+    between,
+    char,
+    choice,
+    digit,
+    doParse,
+    filterP,
+    int,
+    parse,
+    satisfy,
+    sepBy,
+    space,
+    string,
+  )
+import State (State)
+import State qualified as S
 import System.IO
 import Test.HUnit (Assertion, Counts, Test (..), assert, runTestTT, (~:), (~?=))
 import Test.QuickCheck qualified as QC
@@ -29,7 +51,9 @@ data Maze = Maze
     goal :: Cell,
     coins :: [Cell],
     compasses :: [Cell],
-    portals :: [Portal]
+    portals :: [Portal],
+    rows :: Int,
+    cols :: Int
   }
   deriving (Eq, Show)
 
@@ -37,7 +61,7 @@ data Portal = Portal {entrance :: Cell, exit :: Cell} deriving (Eq, Show)
 
 ------------------------------------------------------------------------------------------
 
--- | Part 1: Parsing the text file
+-- | Part 1: Parsing the maze text file
 
 ------------------------------------------------------------------------------------------
 
@@ -102,10 +126,6 @@ setStartPlayerTwo row col maze = maze {startPlayerTwo = Cell row col False}
 setGoal :: Int -> Int -> Maze -> Maze
 setGoal row col maze = maze {goal = Cell row col False}
 
--- Add a portal to the Maze
-addPortal :: Int -> Int -> Maze -> Maze
-addPortal row col maze = undefined
-
 -- Parse a single character
 parseChar :: (Char, Int) -> Int -> Int -> Maze -> Maze -- still need to add portals
 parseChar (c, col) row maze =
@@ -125,16 +145,58 @@ parseRow rows row col maze =
   foldr (\c m -> parseChar c row col m) maze (zip rows [0 ..])
 
 initialMaze :: Maze
-initialMaze = Maze [] (Cell 0 0 False) (Cell 0 0 False) (Cell 0 0 False) [] [] []
+initialMaze = Maze [] (Cell 0 0 False) (Cell 0 0 False) (Cell 0 0 False) [] [] [] 0 0
 
 -- Parse the entire maze and construct the Maze data structure
 parseMaze :: [String] -> Maze
 parseMaze rows =
-  foldr (\(row, rowIdx) m -> parseRow row rowIdx 0 m) initialMaze (zip rows [0 ..])
+  foldr (\(row, rowIdx) m -> parseRow row rowIdx 0 (addRowsCols m)) initialMaze (zip rows [0 ..])
+  where
+    addRowsCols maze = maze {rows = length rows, cols = length (head rows)}
 
 ------------------------------------------------------------------------------------------
 
--- | Part 3:  Testing
+-- | Part 3:  Parsing and adding tokens
+
+------------------------------------------------------------------------------------------
+
+wsP :: Parser a -> Parser a
+wsP p = p <* many (space <|> char ',')
+
+-- >>> [2] ++ [3]
+-- [2,3]
+
+portalP :: Parser [Portal]
+portalP = do
+  _ <- wsP (many alpha)
+  numPortals <- wsP int
+  replicateM numPortals (wsP parsePortal)
+
+parsePortal :: Parser Portal
+parsePortal = do
+  entrance <- wsP parseCell
+  exit <- wsP parseCell
+  return $ Portal entrance exit
+
+parseCell :: Parser Cell
+parseCell = do
+  char '('
+  row <- int
+  char ','
+  col <- int
+  char ')'
+  return $ Cell row col False
+
+portalFileParser :: Parser [Portal]
+portalFileParser = portalP
+
+-- add coins using random gen
+
+-- add compasses (random gen: stretch goal)
+
+------------------------------------------------------------------------------------------
+
+-- | Part 4:  Testing
 
 ------------------------------------------------------------------------------------------
 
@@ -205,6 +267,51 @@ countStartingPoints maze =
 test_goal_reachability :: Test
 test_goal_reachability = undefined
 
+-- | a maze should have the correct dimensions
+test_dimensions :: Test
+test_dimensions =
+  "maze dimensions" ~: do
+    res <- parseFromFile (many mazeFileParser) "data/easy.txt"
+    case res of
+      Just (mazeString, _) -> do
+        let maze = parseMaze mazeString
+        -- print maze
+        assert $ rows maze == 9 && cols maze == 11
+      Nothing -> assert False
+
+test_add_portals_easy :: Test
+test_add_portals_easy =
+  "adding portals easy" ~: do
+    let portalsFile = "data/easy_portals.txt"
+    result <- parseFromFile portalFileParser portalsFile
+    case result of
+      Just (m, _) -> do
+        -- print m
+        assert (length m == 2)
+      Nothing -> error "Failed to parse portals file"
+
+test_add_portals_medium :: Test
+test_add_portals_medium =
+  "adding portals medium" ~: do
+    let portalsFile = "data/medium_portals.txt"
+    result <- parseFromFile portalFileParser portalsFile
+    case result of
+      Just (m, _) -> do
+        -- print m
+        assert (length m == 3)
+      Nothing -> error "Failed to parse portals file"
+
+test_add_portals_hard :: Test
+test_add_portals_hard =
+  "adding portals hard" ~: do
+    let portalsFile = "data/hard_portals.txt"
+    result <- parseFromFile portalFileParser portalsFile
+    case result of
+      Just (m, _) -> do
+        -- print m
+        assert (length m == 4)
+      Nothing -> error "Failed to parse portals file"
+
 test_all :: IO Counts
 test_all =
   runTestTT $
@@ -213,8 +320,12 @@ test_all =
         test_exactly_one_goal,
         test_two_starting_points,
         test_easy_size,
-        test_easy_goal_pos
+        test_easy_goal_pos,
+        test_dimensions,
+        test_add_portals_easy,
+        test_add_portals_medium,
+        test_add_portals_hard
       ]
 
 -- >>> test_all
--- Counts {cases = 5, tried = 5, errors = 0, failures = 0}
+-- Counts {cases = 9, tried = 9, errors = 0, failures = 0}

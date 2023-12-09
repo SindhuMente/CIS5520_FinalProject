@@ -67,6 +67,14 @@ instance Alternative Parser where
       firstJust (Just x) _ = Just x
       firstJust Nothing y = y
 
+instance Monad Parser where
+  return :: a -> Parser a
+  return = pure
+  (>>=) :: Parser a -> (a -> Parser b) -> Parser b
+  p1 >>= f = P $ \s -> do
+    (x, s') <- doParse p1 s
+    doParse (f x) s'
+
 -- There is no Monad instance for Parser so that you will be
 -- forced to practice with `(<*>)`.
 

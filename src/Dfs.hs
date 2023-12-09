@@ -1,10 +1,31 @@
 module Dfs where
 
 import Data.List
-import Maze
 import Test.HUnit (Assertion, Counts, Test (..), assert, runTestTT, (~:), (~?=))
 import Test.QuickCheck qualified as QC
 import Prelude
+
+data Cell = Cell
+  { x :: Int,
+    y :: Int,
+    isWall :: Bool
+  }
+  deriving (Eq, Show)
+
+data Maze = Maze
+  { cells :: [Cell],
+    startPlayerOne :: Cell,
+    startPlayerTwo :: Cell,
+    goal :: Cell,
+    coins :: [Cell],
+    compasses :: [Cell],
+    portals :: [Portal],
+    rows :: Int,
+    cols :: Int
+  }
+  deriving (Eq, Show)
+
+data Portal = Portal {entrance :: Cell, exit :: Cell} deriving (Eq, Show)
 
 -- | Check if there is a path between two cells
 -- takes in a start cell, goal cell, maze, list of visited cells
@@ -13,16 +34,22 @@ doesPathExist start goal maze =
   dfs start goal maze []
 
 -- | Get adjacent cells
--- TODO: check if neighbors are within bounds
 getAdjacentCells :: Cell -> Maze -> [Cell]
 getAdjacentCells (Cell x y _) maze =
-  [ Cell (x - 1) y (isCoordinateWall (x - 1) y maze),
-    Cell (x + 1) y (isCoordinateWall (x + 1) y maze),
-    Cell x (y - 1) (isCoordinateWall x (y - 1) maze),
-    Cell x (y + 1) (isCoordinateWall x (y + 1) maze)
-  ]
+  filter
+    (isCoordinateWithinBounds maze)
+    [ Cell (x - 1) y (isCoordinateWall (x - 1) y maze),
+      Cell (x + 1) y (isCoordinateWall (x + 1) y maze),
+      Cell x (y - 1) (isCoordinateWall x (y - 1) maze),
+      Cell x (y + 1) (isCoordinateWall x (y + 1) maze)
+    ]
 
--- |  Given (x,y), check if cell at (x,y) is a wall
+-- | Check if a coordinate is within bounds of the maze
+isCoordinateWithinBounds :: Maze -> Cell -> Bool
+isCoordinateWithinBounds maze (Cell x y _) =
+  x >= 0 && x < cols maze && y >= 0 && y < rows maze
+
+-- |  Given (x,y), check if Cell at (x,y) is a wall
 isCoordinateWall :: Int -> Int -> Maze -> Bool
 isCoordinateWall x y maze =
   case find (\(Cell x' y' _) -> x == x' && y == y') (cells maze) of
@@ -44,7 +71,7 @@ dfs curr goal maze visited
   | curr == goal = True
   | curr `elem` visited = False
   | isWall curr = False
-  | otherwise = undefined -- call dfs on neighbor
+  | otherwise = any (\neighbor -> dfs neighbor goal maze (curr : visited)) (getNeighbors curr maze)
 
 -- | Get exit cell of this portal
 getPortalExit :: Cell -> Maze -> Maybe Cell
