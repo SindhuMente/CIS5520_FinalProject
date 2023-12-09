@@ -1,0 +1,76 @@
+module LegacyPlayer where
+
+-- type PlayerInfo = M.Map Player Attributes -- change this so no Maybes arise
+
+-- makeMove :: Cell -> Player -> State Game ()
+-- makeMove c p = do
+--   g <- S.get
+--   if c `elem` cells (board g)
+--     then
+--       if isWall c
+--         then error "can't move there" -- do something if trying to move to wall
+--         else
+--           if p == current g
+--             then
+--               if c == goal (board g)
+--                 then undefined -- cur player wins, what to return? - should we use Either Monad?
+--                 else
+--                   if c `elem` coins (board g)
+--                     then collectCoin c p
+--                     else
+--                       if c `elem` getPortalEntrances (board g)
+--                         then enterPortal c p
+--                         else
+--                           if c `elem` compasses (board g)
+--                             then collectCompass c p
+--                             else moveOne c p
+--             else undefined -- do something if player isn't current
+--     else undefined -- error trying to move outside of board?
+
+-- moveOne :: Cell -> Player -> State Game ()
+-- moveOne c p = do
+--   g <- S.get
+--   case M.lookup p (playerInfo g) of
+--     Just attrs ->
+--       let newPlayerInfo = M.insert p (attrs {position = c}) (playerInfo g)
+--        in S.put (g {playerInfo = newPlayerInfo, current = switchPlayer p})
+--     Nothing -> undefined -- error player not found?
+-- extractPosition :: Player -> Game -> Cell
+-- extractPosition p pI =
+--   maybe
+--     Cell {x = -1, y = -1, isWall = True}
+--     position
+--     (M.lookup p (playerInfo pI))
+
+-- -- assuming coin = 1 point
+-- collectCoin :: Cell -> Player -> State Game ()
+-- collectCoin c p = do
+--   g <- S.get
+--   case M.lookup p (playerInfo g) of
+--     Just attrs ->
+--       let newPlayerInfo = M.insert p (Attributes {position = c, numPoints = numPoints attrs + 1}) (playerInfo g)
+--        in let updatedMaze = removeCoin (board g) c
+--            in S.put Game {board = updatedMaze, playerInfo = newPlayerInfo, current = switchPlayer p}
+--     Nothing -> undefined -- error player not found?
+
+-- enterPortal :: Cell -> Player -> State Game ()
+-- enterPortal c p = do
+--   g <- S.get
+--   case M.lookup p (playerInfo g) of
+--     Just attrs ->
+--       let exitPortal = fetchPortal g c
+--        in let newPlayerInfo = M.insert p (attrs {position = exitPortal}) (playerInfo g)
+--            in S.put (g {playerInfo = newPlayerInfo, current = switchPlayer p})
+--     Nothing -> undefined -- error player not found?
+
+-- collectCompass :: Cell -> Player -> State Game ()
+-- collectCompass c p = do
+--   g <- S.get
+--   case M.lookup p (playerInfo g) of
+--     Just attrs ->
+--       let newPosition = pointMe (board g) c p
+--        in let updatedMaze = removeCompass (board g) c
+--            in let newPlayerInfo = M.insert p (Attributes {position = c, numPoints = numPoints attrs + 1}) (playerInfo g)
+--                in let newGame = S.put (g {playerInfo = newPlayerInfo, board = updatedMaze})
+--                    in makeMove c p -- we must move again according to the PointMe spell :)
+--     Nothing -> undefined -- error player not found?

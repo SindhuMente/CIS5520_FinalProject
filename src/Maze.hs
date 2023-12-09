@@ -115,7 +115,7 @@ parseChar (c, col) row maze =
   case c of
     '0' -> addCell row col True
     '1' -> addCell row col False
-    'Q' -> addCoin row col
+    'Q' -> addCell row col False . addCoin row col
     'C' -> addCell row col False . addCompass row col
     'S' -> addCell row col False . setStartPlayerOne row col
     'T' -> addCell row col False . setStartPlayerTwo row col

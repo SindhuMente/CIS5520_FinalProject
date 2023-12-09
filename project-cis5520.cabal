@@ -43,11 +43,13 @@ library
       Lib
       OldPlayer
       Player
+      PlayerState
       State
       Parser
       Parsers
       ParserCombinators
       Maze
+      LegacyPlayer
   hs-source-dirs:
       src
 
