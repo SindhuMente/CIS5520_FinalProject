@@ -115,13 +115,15 @@ exampleMazeP =
             { entrance = Cell {x = 1, y = 1, isWall = False},
               exit = Cell {x = 0, y = 1, isWall = False}
             }
-        ]
+        ],
+      rows = 3,
+      cols = 3
     }
 
 test_getPortalEntrances :: Test
 test_getPortalEntrances =
-  "Portal Entrances tests" ~:
-    TestList
+  "Portal Entrances tests"
+    ~: TestList
       [ getPortalEntrances exampleMazeP ~?= [Cell {x = 1, y = 1, isWall = False}]
       ]
 
@@ -183,7 +185,9 @@ exampleMazeM =
             { entrance = Cell {x = 5, y = 0, isWall = False},
               exit = Cell {x = 3, y = 3, isWall = False}
             }
-        ]
+        ],
+      rows = 6,
+      cols = 6
     }
 
 initGame :: Game
@@ -209,8 +213,8 @@ moveOne g c p =
 
 test_moveOne :: Test
 test_moveOne =
-  "Move One tests" ~:
-    TestList
+  "Move One tests"
+    ~: TestList
       [ extractPosition One (moveOne initGame Cell {x = 5, y = 1, isWall = False} One) ~?= Cell {x = 5, y = 1, isWall = False}
       ]
 
@@ -236,8 +240,8 @@ collectCoin g c p =
 
 test_collectCoin :: Test
 test_collectCoin =
-  "Collect Coin tests" ~:
-    TestList
+  "Collect Coin tests"
+    ~: TestList
       [ coins (board (collectCoin (moveOne initGame Cell {x = 5, y = 1, isWall = False} One) Cell {x = 4, y = 1, isWall = False} One))
           ~?= [ Cell {x = 0, y = 2, isWall = False},
                 Cell {x = 2, y = 4, isWall = False}
@@ -254,8 +258,8 @@ removeCoin maze cell =
 
 test_removeCoin :: Test
 test_removeCoin =
-  "Collect Coin tests" ~:
-    TestList
+  "Collect Coin tests"
+    ~: TestList
       [ coins (removeCoin (board initGame) Cell {x = 4, y = 1, isWall = False})
           ~?= [ Cell {x = 0, y = 2, isWall = False},
                 Cell {x = 2, y = 4, isWall = False}
@@ -274,8 +278,8 @@ fetchPortal g c =
 
 test_fetchPortal :: Test
 test_fetchPortal =
-  "Fetch Portal tests" ~:
-    TestList
+  "Fetch Portal tests"
+    ~: TestList
       [ fetchPortal initGame Cell {x = 5, y = 0, isWall = False}
           ~?= Cell {x = 3, y = 3, isWall = False}
       ]
@@ -293,8 +297,8 @@ enterPortal g c p = case M.lookup p (playerInfo g) of
 
 test_enterPortal :: Test
 test_enterPortal =
-  "Enter Portal tests" ~:
-    TestList
+  "Enter Portal tests"
+    ~: TestList
       [ extractPosition One (enterPortal (moveOne initGame Cell {x = 5, y = 0, isWall = False} One) Cell {x = 5, y = 0, isWall = False} One)
           ~?= Cell {x = 3, y = 3, isWall = False}
       ]
@@ -314,8 +318,8 @@ collectCompass g c p = case M.lookup p (playerInfo g) of
 
 test_collectCompass :: Test
 test_collectCompass =
-  "Collect Compass tests" ~:
-    TestList
+  "Collect Compass tests"
+    ~: TestList
       [ compasses (board (collectCompass (moveOne initGame Cell {x = 4, y = 2, isWall = False} One) Cell {x = 4, y = 3, isWall = False} One))
           ~?= []
       ]
@@ -327,8 +331,8 @@ removeCompass maze cell =
 
 test_removeCompass :: Test
 test_removeCompass =
-  "Collect Coin tests" ~:
-    TestList
+  "Collect Coin tests"
+    ~: TestList
       [ compasses (removeCompass (board initGame) Cell {x = 4, y = 3, isWall = False})
           ~?= []
       ]
@@ -343,8 +347,8 @@ switchPlayer Two = One
 
 test_switchPlayer :: Test
 test_switchPlayer =
-  "Switch Player tests" ~:
-    TestList
+  "Switch Player tests"
+    ~: TestList
       [ switchPlayer One ~?= Two,
         switchPlayer Two ~?= One
       ]
