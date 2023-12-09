@@ -242,7 +242,7 @@ test_easy_size =
     case res of
       Just (mazeString, _) -> do
         let maze = parseMaze mazeString
-        print maze
+        -- print maze
         assert $ length (cells maze) == 99
       Nothing -> assert False
 
@@ -254,7 +254,7 @@ test_easy_goal_pos =
     case res of
       Just (mazeString, _) -> do
         let maze = parseMaze mazeString
-        print maze
+        -- print maze
         assert $ goal maze == Cell 2 8 False
       Nothing -> assert False
 
@@ -262,10 +262,6 @@ test_easy_goal_pos =
 countStartingPoints :: Maze -> Int
 countStartingPoints maze =
   length $ filter (\cell -> cell == startPlayerOne maze || cell == startPlayerTwo maze) (cells maze)
-
--- Goal should be reachable from by starting positions
-test_goal_reachability :: Test
-test_goal_reachability = undefined
 
 -- | a maze should have the correct dimensions
 test_dimensions :: Test
@@ -312,6 +308,24 @@ test_add_portals_hard =
         assert (length m == 4)
       Nothing -> error "Failed to parse portals file"
 
+test_add_portals_to_maze :: Test
+test_add_portals_to_maze =
+  "adding portals to maze" ~: do
+    mazeRes <- parseFromFile (many mazeFileParser) "data/easy.txt"
+    portalsRes <- parseFromFile portalFileParser "data/easy_portals.txt"
+    case mazeRes of
+      Just (mazeString, _) -> do
+        let maze = parseMaze mazeString
+        -- print maze
+        -- print "************ adding portals ************"
+        case portalsRes of
+          Just (portalsList, _) -> do
+            let updatedMaze = maze {portals = portalsList}
+            -- print updatedMaze
+            assert $ length (portals updatedMaze) == 2 && null (portals maze)
+          Nothing -> error "Failed to parse portals file"
+      Nothing -> assert False
+
 test_all :: IO Counts
 test_all =
   runTestTT $
@@ -324,8 +338,9 @@ test_all =
         test_dimensions,
         test_add_portals_easy,
         test_add_portals_medium,
-        test_add_portals_hard
+        test_add_portals_hard,
+        test_add_portals_to_maze
       ]
 
 -- >>> test_all
--- Counts {cases = 9, tried = 9, errors = 0, failures = 0}
+-- Counts {cases = 10, tried = 10, errors = 0, failures = 0}
