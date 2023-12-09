@@ -45,6 +45,10 @@ library
       State
       ParserCombinators
       Dfs
+      OldPlayer
+      Player
+      PlayerState
+      LegacyPlayer
   hs-source-dirs:
       src
 
