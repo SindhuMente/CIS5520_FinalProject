@@ -49,6 +49,7 @@ library
       Player
       PlayerState
       LegacyPlayer
+      DList
   hs-source-dirs:
       src
 
