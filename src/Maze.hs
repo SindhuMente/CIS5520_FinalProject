@@ -223,10 +223,10 @@ addCoinsToMazeRandom n maze =
    in foldr (\(x, y) m -> addCoin x y m) maze randomCoords
 
 -- >>> getPotentialCoinCoordinates test_maze
--- [(0,0),(0,2),(0,7),(0,8),(0,9),(1,0),(1,1),(1,2),(1,4),(1,9),(2,0),(2,1),(2,2),(2,3),(2,4),(2,5),(2,6),(2,7),(3,1),(3,2),(3,4),(3,5),(3,6),(3,7),(3,8),(4,2),(4,6),(5,1),(5,6),(5,7),(5,8),(6,0),(6,1),(6,2),(6,5),(6,6),(6,7),(7,2),(7,3),(7,4),(7,5),(8,3),(8,7),(8,10)]
+-- [(0,0),(0,2),(0,7),(0,8),(0,9),(1,1),(1,2),(1,4),(1,9),(2,0),(2,1),(2,2),(2,3),(2,4),(2,6),(2,7),(3,1),(3,2),(3,4),(3,5),(3,6),(3,7),(3,8),(4,2),(4,6),(5,1),(5,6),(5,7),(5,8),(6,1),(6,2),(6,5),(6,6),(6,7),(7,2),(7,3),(7,4),(7,5),(7,7),(8,3),(8,7),(8,10)]
 
 -- >>>  randmonPickN (mkStdGen' 40) 5 (getPotentialCoinCoordinates test_maze)
--- ([(6,0),(7,4),(5,6),(3,7),(4,2)],StdGen {unStdGen = SMGen 17376949877490861412 5307070500861010077})
+-- ([(6,5),(8,3),(5,8),(4,2),(5,1)],StdGen {unStdGen = SMGen 17376949877490861412 5307070500861010077})
 
 ------------------------------------------------------------------------------------------
 
@@ -253,12 +253,51 @@ getPotentialCompassCoordinates maze = go (cells maze) D.empty
 
 addCompassesToMazeRandom :: Int -> Maze -> Maze
 addCompassesToMazeRandom n maze =
-  let (randomCoords, _) = randmonPickN (mkStdGen' 40) n (getPotentialCoinCoordinates maze)
+  let (randomCoords, _) = randmonPickN (mkStdGen' 40) n (getPotentialCompassCoordinates maze)
    in foldr (\(x, y) m -> addCompass x y m) maze randomCoords
 
 ------------------------------------------------------------------------------------------
 
--- | Part 6:  Testing
+-- | Part 7:  Drawing the board
+
+------------------------------------------------------------------------------------------
+
+-- map a cell to its character representation
+cellToChar :: Maze -> Cell -> Char
+cellToChar maze cell
+  | isWall cell = 'X'
+  | cell == startPlayerOne maze = 'S'
+  | cell == startPlayerTwo maze = 'T'
+  | cell == goal maze = 'G'
+  | cell `elem` coins maze = 'Q'
+  | cell `elem` compasses maze = 'C'
+  | cell `elem` portalCells = 'P'
+  | otherwise = ' '
+  where
+    portalCells = concatMap (\portal -> [entrance portal]) (portals maze)
+
+-- | convert a maze to a string representation
+-- caution might be bug here in getting the correct cell
+showMaze :: Maze -> String
+showMaze maze =
+  let border = "+" ++ concat (replicate (cols maze) "---+") ++ "\n"
+      rowStrings = [concat ["| ", [cellToChar maze (fromMaybe (Cell 0 0 False) (getCell y x maze))], " "] | y <- [0 .. rows maze - 1], x <- [0 .. cols maze - 1]]
+      formattedRows = List.intercalate ("\n" ++ border) (map concat (chunksOf (cols maze) rowStrings))
+   in border ++ formattedRows ++ "\n" ++ border
+
+-- | split a list into chunks of size n
+chunksOf :: Int -> [e] -> [[e]]
+chunksOf i ls = map (take i) (build (splitter ls))
+  where
+    splitter :: [e] -> ([e] -> a -> a) -> a -> a
+    splitter [] _ n = n
+    splitter l c n = l `c` splitter (drop i l) c n
+    build :: ((a -> [a] -> [a]) -> [a] -> [a]) -> [a]
+    build g = g (:) []
+
+------------------------------------------------------------------------------------------
+
+-- | Part 8:  Testing
 
 ------------------------------------------------------------------------------------------
 
@@ -383,7 +422,7 @@ test_add_portals_to_maze =
         case portalsRes of
           Just (portalsList, _) -> do
             let updatedMaze = maze {portals = portalsList}
-            -- print updatedMaze
+            print updatedMaze
             assert $ length (portals updatedMaze) == 2 && null (portals maze)
           Nothing -> error "Failed to parse portals file"
       Nothing -> assert False
@@ -483,3 +522,135 @@ test_all =
 -- >>> test_all
 -- Counts {cases = 14, tried = 14, errors = 0, failures = 0}
 
+test_maze :: Maze
+test_maze =
+  Maze
+    { cells =
+        [ Cell {x = 0, y = 0, isWall = False},
+          Cell {x = 0, y = 1, isWall = True},
+          Cell {x = 0, y = 2, isWall = False},
+          Cell {x = 0, y = 3, isWall = True},
+          Cell {x = 0, y = 4, isWall = False},
+          Cell {x = 0, y = 5, isWall = True},
+          Cell {x = 0, y = 6, isWall = True},
+          Cell {x = 0, y = 7, isWall = False},
+          Cell {x = 0, y = 8, isWall = False},
+          Cell {x = 0, y = 9, isWall = False},
+          Cell {x = 0, y = 10, isWall = True},
+          Cell {x = 1, y = 0, isWall = False},
+          Cell {x = 1, y = 1, isWall = False},
+          Cell {x = 1, y = 2, isWall = False},
+          Cell {x = 1, y = 3, isWall = True},
+          Cell {x = 1, y = 4, isWall = False},
+          Cell {x = 1, y = 5, isWall = True},
+          Cell {x = 1, y = 6, isWall = True},
+          Cell {x = 1, y = 7, isWall = True},
+          Cell {x = 1, y = 8, isWall = True},
+          Cell {x = 1, y = 9, isWall = False},
+          Cell {x = 1, y = 10, isWall = True},
+          Cell {x = 2, y = 0, isWall = False},
+          Cell {x = 2, y = 1, isWall = False},
+          Cell {x = 2, y = 2, isWall = False},
+          Cell {x = 2, y = 3, isWall = False},
+          Cell {x = 2, y = 4, isWall = False},
+          Cell {x = 2, y = 5, isWall = False},
+          Cell {x = 2, y = 6, isWall = False},
+          Cell {x = 2, y = 7, isWall = False},
+          Cell {x = 2, y = 8, isWall = False},
+          Cell {x = 2, y = 9, isWall = True},
+          Cell {x = 2, y = 10, isWall = True},
+          Cell {x = 3, y = 0, isWall = True},
+          Cell {x = 3, y = 1, isWall = False},
+          Cell {x = 3, y = 2, isWall = False},
+          Cell {x = 3, y = 3, isWall = True},
+          Cell {x = 3, y = 4, isWall = False},
+          Cell {x = 3, y = 5, isWall = False},
+          Cell {x = 3, y = 6, isWall = False},
+          Cell {x = 3, y = 7, isWall = False},
+          Cell {x = 3, y = 8, isWall = False},
+          Cell {x = 3, y = 9, isWall = True},
+          Cell {x = 3, y = 10, isWall = True},
+          Cell {x = 4, y = 0, isWall = True},
+          Cell {x = 4, y = 1, isWall = True},
+          Cell {x = 4, y = 2, isWall = False},
+          Cell {x = 4, y = 3, isWall = True},
+          Cell {x = 4, y = 4, isWall = True},
+          Cell {x = 4, y = 5, isWall = True},
+          Cell {x = 4, y = 6, isWall = False},
+          Cell {x = 4, y = 7, isWall = True},
+          Cell {x = 4, y = 8, isWall = True},
+          Cell {x = 4, y = 9, isWall = True},
+          Cell {x = 4, y = 10, isWall = True},
+          Cell {x = 5, y = 0, isWall = True},
+          Cell {x = 5, y = 1, isWall = False},
+          Cell {x = 5, y = 2, isWall = True},
+          Cell {x = 5, y = 3, isWall = True},
+          Cell {x = 5, y = 4, isWall = True},
+          Cell {x = 5, y = 5, isWall = True},
+          Cell {x = 5, y = 6, isWall = False},
+          Cell {x = 5, y = 7, isWall = False},
+          Cell {x = 5, y = 8, isWall = False},
+          Cell {x = 5, y = 9, isWall = True},
+          Cell {x = 5, y = 10, isWall = True},
+          Cell {x = 6, y = 0, isWall = False},
+          Cell {x = 6, y = 1, isWall = False},
+          Cell {x = 6, y = 2, isWall = False},
+          Cell {x = 6, y = 3, isWall = True},
+          Cell {x = 6, y = 4, isWall = True},
+          Cell {x = 6, y = 5, isWall = False},
+          Cell {x = 6, y = 6, isWall = False},
+          Cell {x = 6, y = 7, isWall = False},
+          Cell {x = 6, y = 8, isWall = True},
+          Cell {x = 6, y = 9, isWall = True},
+          Cell {x = 6, y = 10, isWall = True},
+          Cell {x = 7, y = 0, isWall = True},
+          Cell {x = 7, y = 1, isWall = True},
+          Cell {x = 7, y = 2, isWall = False},
+          Cell {x = 7, y = 3, isWall = False},
+          Cell {x = 7, y = 4, isWall = False},
+          Cell {x = 7, y = 5, isWall = False},
+          Cell {x = 7, y = 6, isWall = True},
+          Cell {x = 7, y = 7, isWall = False},
+          Cell {x = 7, y = 8, isWall = True},
+          Cell {x = 7, y = 9, isWall = True},
+          Cell {x = 7, y = 10, isWall = True},
+          Cell {x = 8, y = 0, isWall = True},
+          Cell {x = 8, y = 1, isWall = True},
+          Cell {x = 8, y = 2, isWall = True},
+          Cell {x = 8, y = 3, isWall = False},
+          Cell {x = 8, y = 4, isWall = True},
+          Cell {x = 8, y = 5, isWall = False},
+          Cell {x = 8, y = 6, isWall = True},
+          Cell {x = 8, y = 7, isWall = False},
+          Cell {x = 8, y = 8, isWall = True},
+          Cell {x = 8, y = 9, isWall = True},
+          Cell {x = 8, y = 10, isWall = False}
+        ],
+      startPlayerOne = Cell {x = 0, y = 4, isWall = False},
+      startPlayerTwo = Cell {x = 8, y = 5, isWall = False},
+      goal = Cell {x = 2, y = 8, isWall = False},
+      coins = [],
+      compasses = [],
+      portals = [Portal {entrance = Cell {x = 6, y = 0, isWall = False}, exit = Cell {x = 4, y = 7, isWall = False}}, Portal {entrance = Cell {x = 2, y = 5, isWall = False}, exit = Cell {x = 1, y = 0, isWall = False}}],
+      rows = 9,
+      cols = 11
+    }
+
+smallTestMaze :: Maze
+smallTestMaze =
+  Maze
+    { cells =
+        [ Cell {x = 0, y = 0, isWall = False},
+          Cell {x = 0, y = 1, isWall = False},
+          Cell {x = 1, y = 0, isWall = False},
+          Cell {x = 1, y = 1, isWall = False}
+        ],
+      startPlayerOne = Cell {x = 0, y = 0, isWall = False},
+      startPlayerTwo = Cell {x = 1, y = 1, isWall = False},
+      goal = Cell {x = 0, y = 1, isWall = False},
+      coins = [],
+      compasses = [],
+      portals = [],
+      rows = 2,
+      cols = 2
+    }
