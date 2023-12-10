@@ -45,6 +45,7 @@ library
       State
       ParserCombinators
       Dfs
+      DList
       OldPlayer
       Player
       PlayerState
