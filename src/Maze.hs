@@ -251,9 +251,14 @@ getPotentialCompassCoordinates maze = go (cells maze) D.empty
         then go rest visited
         else go rest (visited `D.append` D.singleton (x cell, y cell))
 
+-- addCompassesToMazeRandom :: Int -> Maze -> Maze
+-- addCompassesToMazeRandom n maze =
+--   let (randomCoords, _) = randmonPickN (mkStdGen' 40) n (getPotentialCoinCoordinates maze)
+--    in foldr (\(x, y) m -> addCompass x y m) maze randomCoords
+
 addCompassesToMazeRandom :: Int -> Maze -> Maze
 addCompassesToMazeRandom n maze =
-  let (randomCoords, _) = randmonPickN (mkStdGen' 40) n (getPotentialCoinCoordinates maze)
+  let (randomCoords, _) = randmonPickN (mkStdGen' 40) n (getPotentialCompassCoordinates maze)
    in foldr (\(x, y) m -> addCompass x y m) maze randomCoords
 
 ------------------------------------------------------------------------------------------
