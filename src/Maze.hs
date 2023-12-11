@@ -18,8 +18,11 @@ import System.IO
 import System.Random (StdGen)
 import System.Random qualified as Random (mkStdGen, randomIO, randomR, uniform, uniformR)
 import Test.HUnit (Assertion, Counts, Test (..), Testable (test), assert, runTestTT, (~:), (~?=))
+import Test.QuickCheck (Arbitrary (..), Gen)
 import Test.QuickCheck qualified as QC
 import Prelude
+
+-- import GameState (Action)
 
 ------------------------------------------------------------------------------------------
 
@@ -266,7 +269,7 @@ addCompassesToMazeRandom n maze =
 
 ------------------------------------------------------------------------------------------
 
--- | Part 7:  Drawing the board
+-- | Part 6:  Drawing the board
 
 ------------------------------------------------------------------------------------------
 
@@ -305,7 +308,7 @@ chunksOf i ls = map (take i) (build (splitter ls))
 
 ------------------------------------------------------------------------------------------
 
--- | Part 8:  Testing
+-- | Part 7:  HUnit Testing
 
 ------------------------------------------------------------------------------------------
 
@@ -576,6 +579,49 @@ test_all =
 -- >>> test_all
 -- Counts {cases = 14, tried = 14, errors = 0, failures = 0}
 
+------------------------------------------------------------------------------------------
+
+-- | Part 8:  Prop Testing
+
+------------------------------------------------------------------------------------------
+
+-- 14 is max XCoord size (i.e, hard maze)
+genXCoordinate :: Gen Int
+genXCoordinate = QC.choose (0, 14)
+
+-- 17 is max YCoord size (i.e, hard maze)
+genYCoordinate :: Gen Int
+genYCoordinate = QC.choose (0, 17)
+
+genIsWall :: Gen Bool
+genIsWall = QC.arbitrary
+
+genCell :: Gen Cell
+genCell = do
+  x <- genXCoordinate
+  y <- genYCoordinate
+  Cell x y <$> genIsWall
+
+instance Arbitrary Cell where
+  arbitrary :: Gen Cell
+  arbitrary = genCell
+
+  shrink :: Cell -> [Cell]
+  shrink (Cell x y isWall) = [Cell x' y' isWall | (x', y') <- shrink (x, y)]
+
+-- >>> QC.generate $ QC.arbitrary :: IO Cell
+-- Cell {x = 12, y = 7, isWall = False}
+
+prop_AddCellShouldIncreaseMazeSizeByOne :: Cell -> Bool
+prop_AddCellShouldIncreaseMazeSizeByOne cell =
+  let maze = addCell (x cell) (y cell) (isWall cell) test_maze1
+   in length (cells maze) == length (cells test_maze1) + 1
+
+prop_AddCoinShouldIncreaseCoinsSizeByOne :: Cell -> Bool
+prop_AddCoinShouldIncreaseCoinsSizeByOne cell =
+  let maze = addCoin (x cell) (y cell) test_maze1
+   in length (coins maze) == length (coins test_maze1) + 1
+
 test_maze :: Maze
 test_maze =
   Maze
@@ -688,6 +734,42 @@ test_maze =
       portals = [Portal {entrance = Cell {x = 6, y = 0, isWall = False}, exit = Cell {x = 4, y = 7, isWall = False}}, Portal {entrance = Cell {x = 2, y = 5, isWall = False}, exit = Cell {x = 1, y = 0, isWall = False}}],
       rows = 9,
       cols = 11
+    }
+
+test_maze1 :: Maze
+test_maze1 =
+  Maze
+    { cells =
+        [ Cell {x = 0, y = 0, isWall = False},
+          Cell {x = 0, y = 1, isWall = False},
+          Cell {x = 0, y = 2, isWall = True},
+          Cell {x = 0, y = 3, isWall = False},
+          Cell {x = 1, y = 0, isWall = True},
+          Cell {x = 1, y = 1, isWall = False},
+          Cell {x = 1, y = 2, isWall = False},
+          Cell {x = 1, y = 3, isWall = False},
+          Cell {x = 2, y = 0, isWall = False},
+          Cell {x = 2, y = 1, isWall = False},
+          Cell {x = 2, y = 2, isWall = False},
+          Cell {x = 2, y = 3, isWall = False},
+          Cell {x = 3, y = 0, isWall = True},
+          Cell {x = 3, y = 1, isWall = False},
+          Cell {x = 3, y = 2, isWall = False},
+          Cell {x = 3, y = 3, isWall = False}
+        ],
+      startPlayerOne = Cell {x = 3, y = 1, isWall = False},
+      startPlayerTwo = Cell {x = 0, y = 3, isWall = False},
+      goal = Cell {x = 0, y = 0, isWall = False},
+      coins = [Cell {x = 2, y = 2, isWall = False}],
+      compasses = [Cell {x = 1, y = 1, isWall = False}],
+      portals =
+        [ Portal
+            { entrance = Cell {x = 2, y = 0, isWall = False},
+              exit = Cell {x = 0, y = 1, isWall = False}
+            }
+        ],
+      rows = 4,
+      cols = 4
     }
 
 smallTestMaze :: Maze
