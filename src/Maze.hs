@@ -504,6 +504,32 @@ test_random_add_compasses_to_maze =
         assert $ length (compasses updatedMaze) == 2
       Nothing -> assert False
 
+test_add_medium_maze :: Test
+test_add_medium_maze =
+  "add medium maze" ~: do
+    mazeRes <- parseFromFile (many mazeFileParser) "data/medium.txt"
+    case mazeRes of
+      Just (mazeString, _) -> do
+        let maze = parseMaze mazeString
+        putStrLn "\n"
+        putStrLn $ showMaze maze
+        putStrLn $ show $ length (cells maze)
+        assert $ length (cells maze) == 168
+      Nothing -> assert False
+
+test_add_hard_maze :: Test
+test_add_hard_maze =
+  "add hard maze" ~: do
+    mazeRes <- parseFromFile (many mazeFileParser) "data/hard.txt"
+    case mazeRes of
+      Just (mazeString, _) -> do
+        let maze = parseMaze mazeString
+        putStrLn "\n"
+        putStrLn $ showMaze maze
+        putStrLn $ show $ length (cells maze)
+        assert $ length (cells maze) == 180
+      Nothing -> assert False
+
 test_all :: IO Counts
 test_all =
   runTestTT $
