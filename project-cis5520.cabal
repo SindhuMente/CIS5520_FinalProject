@@ -50,7 +50,6 @@ library
       Player
       PlayerState
       LegacyPlayer
-      DList
       GameState
   hs-source-dirs:
       src
