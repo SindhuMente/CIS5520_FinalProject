@@ -45,9 +45,12 @@ data Maze = Maze
     rows :: Int,
     cols :: Int
   }
-  deriving (Eq, Show)
+  deriving (Eq)
 
 data Portal = Portal {entrance :: Cell, exit :: Cell} deriving (Eq, Show)
+
+instance Show Maze where
+  show = showMaze
 
 ------------------------------------------------------------------------------------------
 
