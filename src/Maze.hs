@@ -414,8 +414,8 @@ test_add_portals_hard =
         assert (length m == 4)
       Nothing -> error "Failed to parse portals file"
 
-test_add_portals_to_maze :: Test
-test_add_portals_to_maze =
+test_add_portals_to_maze_easy :: Test
+test_add_portals_to_maze_easy =
   "adding portals to maze" ~: do
     mazeRes <- parseFromFile (many mazeFileParser) "data/easy.txt"
     portalsRes <- parseFromFile portalFileParser "data/easy_portals.txt"
@@ -530,6 +530,26 @@ test_add_hard_maze =
         assert $ length (cells maze) == 180
       Nothing -> assert False
 
+test_add_portals_to_maze_hard :: Test
+test_add_portals_to_maze_hard =
+  "adding portals to maze" ~: do
+    mazeRes <- parseFromFile (many mazeFileParser) "data/hard.txt"
+    portalsRes <- parseFromFile portalFileParser "data/hard_portals.txt"
+    case mazeRes of
+      Just (mazeString, _) -> do
+        let maze = parseMaze mazeString
+        -- print maze
+        -- print "************ adding portals ************"
+        case portalsRes of
+          Just (portalsList, _) -> do
+            let updatedMaze = maze {portals = portalsList}
+            putStrLn "\n"
+            putStrLn $ showMaze updatedMaze
+            -- print updatedMaze
+            assert $ length (portals updatedMaze) == 4 && null (portals maze)
+          Nothing -> error "Failed to parse portals file"
+      Nothing -> assert False
+
 test_all :: IO Counts
 test_all =
   runTestTT $
@@ -543,7 +563,7 @@ test_all =
         test_add_portals_easy,
         test_add_portals_medium,
         test_add_portals_hard,
-        test_add_portals_to_maze,
+        test_add_portals_to_maze_easy,
         test_get_eligible_coin_coordinates,
         test_random_add_coins_to_maze,
         test_get_eligible_compass_coordinates,
