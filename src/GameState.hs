@@ -159,6 +159,7 @@ getPortalEntrances maze = map entrance (portals maze)
 
 ------------------------------------------------------------------------------------------
 
+-- combine updatePosition & Points functions
 updatePosition :: Player -> PlayerInfo -> Cell -> PlayerInfo
 updatePosition One pI c =
   let p1 = player1 pI
@@ -292,7 +293,7 @@ playGame emptyGame = do
   putStrLn "please enter your desired difficulty level(easy, medium, or hard)"
   putStr ">>> "
   difficulty <- getLine
-  case difficulty of
+  case difficulty of -- extract mapping from difficulty to num coins/compasses
     "easy" -> do
       initMaze <- P.parseFromFile (many mazeFileParser) "data/easy.txt"
       getMaze initMaze "data/easy_portals.txt" 3 1 -- coins, compases
