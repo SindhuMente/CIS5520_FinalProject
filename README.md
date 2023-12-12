@@ -1,4 +1,39 @@
-# project-cis5520
+# project-cis5520: Wizard Maze
+
+Names: Sindhura Mente, Amelia Sharpe
+Pennkeys: smente, amsharpe
+
+## File overview (in order they should be read)
+Maze.hs:
+GameState.hs:
+
+
+## Additional libraries depended on
+DList.hs
+ParserCombinators.hs
+State.hs
+
+## Other considerations
+
+## Compilation instructions
+To start the game and play the game:
+- `stack ghci src/GameState.hs`
+- type `startGame` and press enter
+
+To run tests:
+
+
+
+
+Give your names, pennkeys, and an overview of the files in your project. Briefly describe each of the main components and the order that they should be read. Also list any additional libraries that your project depends on and any special instructions for compilation.
+
+
+
+
+
+
+
+
 
 This is an "Empty project" for Haskell. It is configured in the same way as
 the lecture demo and homework assignments for CIS 5520, but contains no
