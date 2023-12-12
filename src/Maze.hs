@@ -2,8 +2,6 @@ module Maze where
 
 import Control.Applicative (Alternative (..))
 import Control.Monad (ap, foldM, liftM, replicateM, replicateM_, unless, when)
--- import Dfs
-
 import DList qualified as D
 import Data.Char (isAlpha, isDigit, isLower, isSpace, isUpper)
 import Data.List qualified as List
@@ -22,11 +20,9 @@ import Test.QuickCheck (Arbitrary (..), Gen)
 import Test.QuickCheck qualified as QC
 import Prelude
 
--- import GameState (Action)
-
 ------------------------------------------------------------------------------------------
 
--- | Part 0: Maze data types
+-- | Part 0: Maze data types & instances
 
 ------------------------------------------------------------------------------------------
 
@@ -52,7 +48,15 @@ data Maze = Maze
 
 data Portal = Portal {entrance :: Cell, exit :: Cell} deriving (Eq, Show)
 
+instance Arbitrary Cell where
+  arbitrary :: Gen Cell
+  arbitrary = genCell
+
+  shrink :: Cell -> [Cell]
+  shrink (Cell x y isWall) = [Cell x' y' isWall | (x', y') <- shrink (x, y)]
+
 instance Show Maze where
+  show :: Maze -> String
   show = showMaze
 
 ------------------------------------------------------------------------------------------
@@ -228,12 +232,6 @@ addCoinsToMazeRandom n maze =
   let (randomCoords, _) = randmonPickN (mkStdGen' 40) n (getPotentialCoinCoordinates maze)
    in foldr (\(x, y) m -> addCoin x y m) maze randomCoords
 
--- >>> getPotentialCoinCoordinates test_maze
--- [(0,0),(0,2),(0,7),(0,8),(0,9),(1,1),(1,2),(1,4),(1,9),(2,0),(2,1),(2,2),(2,3),(2,4),(2,6),(2,7),(3,1),(3,2),(3,4),(3,5),(3,6),(3,7),(3,8),(4,2),(4,6),(5,1),(5,6),(5,7),(5,8),(6,1),(6,2),(6,5),(6,6),(6,7),(7,2),(7,3),(7,4),(7,5),(7,7),(8,3),(8,7),(8,10)]
-
--- >>>  randmonPickN (mkStdGen' 40) 5 (getPotentialCoinCoordinates test_maze)
--- ([(6,5),(8,3),(5,8),(4,2),(5,1)],StdGen {unStdGen = SMGen 17376949877490861412 5307070500861010077})
-
 ------------------------------------------------------------------------------------------
 
 -- | Part 5:  Random generation of compasses
@@ -256,11 +254,6 @@ getPotentialCompassCoordinates maze = go (cells maze) D.empty
       if isWall cell || isPortalOrCoinOrStartOrGoal cell maze
         then go rest visited
         else go rest (visited `D.append` D.singleton (x cell, y cell))
-
--- addCompassesToMazeRandom :: Int -> Maze -> Maze
--- addCompassesToMazeRandom n maze =
---   let (randomCoords, _) = randmonPickN (mkStdGen' 40) n (getPotentialCoinCoordinates maze)
---    in foldr (\(x, y) m -> addCompass x y m) maze randomCoords
 
 addCompassesToMazeRandom :: Int -> Maze -> Maze
 addCompassesToMazeRandom n maze =
@@ -288,7 +281,6 @@ cellToChar maze cell
     portalCells = concatMap (\portal -> [entrance portal]) (portals maze)
 
 -- | convert a maze to a string representation
--- caution might be bug here in getting the correct cell
 showMaze :: Maze -> String
 showMaze maze =
   let border = "+" ++ concat (replicate (cols maze) "---+") ++ "\n"
@@ -318,7 +310,7 @@ test_file_has_valid_characters =
   "valid characters" ~: do
     res <- parseFromFile (many mazeFileParser) "data/easy.txt"
     case res of
-      Just (mazeString, _) -> assert $ all (all (`elem` ['0', '1', 'Q', 'C', 'P', 'G', 'S', 'T'])) mazeString
+      Just (mazeString, _) -> assert $ not $ null mazeString && all (all (`elem` ['0', '1', 'Q', 'C', 'P', 'G', 'S', 'T'])) mazeString
       Nothing -> assert False
 
 -- | a maze should have exactly 1 goal
@@ -329,7 +321,7 @@ test_exactly_one_goal =
     case res of
       Just (mazeString, _) -> do
         let maze = parseMaze mazeString
-        assert $ countGoals maze == 1
+        assert $ not $ null mazeString && countGoals maze == 1
       Nothing -> assert False
 
 countGoals :: Maze -> Int
@@ -343,7 +335,7 @@ test_two_starting_points =
     case res of
       Just (mazeString, _) -> do
         let maze = parseMaze mazeString
-        assert $ countStartingPoints maze == 2
+        assert $ not $ null mazeString && countStartingPoints maze == 2
       Nothing -> assert False
 
 -- | an easy maze should be of size 99
@@ -354,8 +346,7 @@ test_easy_size =
     case res of
       Just (mazeString, _) -> do
         let maze = parseMaze mazeString
-        -- print maze
-        assert $ length (cells maze) == 99
+        assert $ not $ null mazeString && length (cells maze) == 99
       Nothing -> assert False
 
 -- | testing that goal pos was parsed correctly
@@ -366,11 +357,9 @@ test_easy_goal_pos =
     case res of
       Just (mazeString, _) -> do
         let maze = parseMaze mazeString
-        -- print maze
-        assert $ goal maze == Cell 2 8 False
+        assert $ not $ null mazeString && goal maze == Cell 2 8 False
       Nothing -> assert False
 
--- Helper unction to count the number of starting points in a maze
 countStartingPoints :: Maze -> Int
 countStartingPoints maze =
   length $ filter (\cell -> cell == startPlayerOne maze || cell == startPlayerTwo maze) (cells maze)
@@ -383,8 +372,7 @@ test_dimensions =
     case res of
       Just (mazeString, _) -> do
         let maze = parseMaze mazeString
-        -- print maze
-        assert $ rows maze == 9 && cols maze == 11
+        assert $ not $ null mazeString && rows maze == 9 && cols maze == 11
       Nothing -> assert False
 
 test_add_portals_easy :: Test
@@ -394,8 +382,7 @@ test_add_portals_easy =
     result <- parseFromFile portalFileParser portalsFile
     case result of
       Just (m, _) -> do
-        -- print m
-        assert (length m == 2)
+        assert $ not $ null m && (length m == 2)
       Nothing -> error "Failed to parse portals file"
 
 test_add_portals_medium :: Test
@@ -405,8 +392,7 @@ test_add_portals_medium =
     result <- parseFromFile portalFileParser portalsFile
     case result of
       Just (m, _) -> do
-        -- print m
-        assert (length m == 3)
+        assert $ not $ null m && (length m == 3)
       Nothing -> error "Failed to parse portals file"
 
 test_add_portals_hard :: Test
@@ -416,8 +402,7 @@ test_add_portals_hard =
     result <- parseFromFile portalFileParser portalsFile
     case result of
       Just (m, _) -> do
-        -- print m
-        assert (length m == 4)
+        assert $ not $ null m && (length m == 4)
       Nothing -> error "Failed to parse portals file"
 
 test_add_portals_to_maze_easy :: Test
@@ -428,13 +413,10 @@ test_add_portals_to_maze_easy =
     case mazeRes of
       Just (mazeString, _) -> do
         let maze = parseMaze mazeString
-        -- print maze
-        -- print "************ adding portals ************"
         case portalsRes of
           Just (portalsList, _) -> do
             let updatedMaze = maze {portals = portalsList}
-            print updatedMaze
-            assert $ length (portals updatedMaze) == 2 && null (portals maze)
+            assert $ not $ null portalsList && length (portals updatedMaze) == 2 && null (portals maze)
           Nothing -> error "Failed to parse portals file"
       Nothing -> assert False
 
@@ -445,10 +427,7 @@ test_get_eligible_coin_coordinates =
     case mazeRes of
       Just (mazeString, _) -> do
         let maze = parseMaze mazeString
-        print maze
         let coords = getPotentialCoinCoordinates maze
-        print "\n"
-        print coords
         assert $
           all
             ( \(x, y) ->
@@ -467,11 +446,8 @@ test_random_add_coins_to_maze =
     case mazeRes of
       Just (mazeString, _) -> do
         let maze = parseMaze mazeString
-        -- print maze
         let updatedMaze = addCoinsToMazeRandom 5 maze
-        -- print "****************************"
-        print updatedMaze
-        assert $ length (coins updatedMaze) == 5
+        assert $ not $ null mazeString && length (coins updatedMaze) == 5
       Nothing -> assert False
 
 test_get_eligible_compass_coordinates :: Test
@@ -481,78 +457,100 @@ test_get_eligible_compass_coordinates =
     case mazeRes of
       Just (mazeString, _) -> do
         let maze = parseMaze mazeString
-        print maze
         let coords = getPotentialCompassCoordinates maze
-        print "\n"
-        print coords
         assert $
-          all
-            ( \(x, y) ->
-                let cell = getCell x y maze
-                 in case cell of
-                      Nothing -> False
-                      Just c -> not $ isPortalOrCoinOrStartOrGoal c maze
-            )
-            coords
+          not $
+            null mazeString
+              && all
+                ( \(x, y) ->
+                    let cell = getCell x y maze
+                     in case cell of
+                          Nothing -> False
+                          Just c -> not $ isPortalOrCoinOrStartOrGoal c maze
+                )
+                coords
       Nothing -> assert False
 
-test_random_add_compasses_to_maze :: Test
-test_random_add_compasses_to_maze =
+test_random_add_compasses_to_maze_easy :: Test
+test_random_add_compasses_to_maze_easy =
   "randomly add compasses to maze" ~: do
     mazeRes <- parseFromFile (many mazeFileParser) "data/easy.txt"
     case mazeRes of
       Just (mazeString, _) -> do
         let maze = parseMaze mazeString
-        -- print maze
         let updatedMaze = addCompassesToMazeRandom 2 maze
-        -- print "****************************"
-        print updatedMaze
         assert $ length (compasses updatedMaze) == 2
       Nothing -> assert False
 
-test_add_medium_maze :: Test
-test_add_medium_maze =
+test_random_add_compasses_to_maze_medium :: Test
+test_random_add_compasses_to_maze_medium =
+  "randomly add compasses to maze" ~: do
+    mazeRes <- parseFromFile (many mazeFileParser) "data/medium.txt"
+    case mazeRes of
+      Just (mazeString, _) -> do
+        let maze = parseMaze mazeString
+        let updatedMaze = addCompassesToMazeRandom 0 maze
+        assert $ null (compasses updatedMaze)
+      Nothing -> assert False
+
+test_random_add_compasses_to_maze_hard :: Test
+test_random_add_compasses_to_maze_hard =
+  "randomly add compasses to maze" ~: do
+    mazeRes <- parseFromFile (many mazeFileParser) "data/hard.txt"
+    case mazeRes of
+      Just (mazeString, _) -> do
+        let maze = parseMaze mazeString
+        let updatedMaze = addCompassesToMazeRandom 11 maze
+        assert $ length (compasses updatedMaze) == 11
+      Nothing -> assert False
+
+test_medium_maze_size :: Test
+test_medium_maze_size =
   "add medium maze" ~: do
     mazeRes <- parseFromFile (many mazeFileParser) "data/medium.txt"
     case mazeRes of
       Just (mazeString, _) -> do
         let maze = parseMaze mazeString
-        putStrLn "\n"
-        putStrLn $ showMaze maze
-        putStrLn $ show $ length (cells maze)
         assert $ length (cells maze) == 168
       Nothing -> assert False
 
-test_add_hard_maze :: Test
-test_add_hard_maze =
+test_hard_maze_size :: Test
+test_hard_maze_size =
   "add hard maze" ~: do
     mazeRes <- parseFromFile (many mazeFileParser) "data/hard.txt"
     case mazeRes of
       Just (mazeString, _) -> do
         let maze = parseMaze mazeString
-        putStrLn "\n"
-        putStrLn $ showMaze maze
-        putStrLn $ show $ length (cells maze)
-        assert $ length (cells maze) == 180
+        assert $ length (cells maze) == 270
       Nothing -> assert False
 
 test_add_portals_to_maze_hard :: Test
 test_add_portals_to_maze_hard =
-  "adding portals to maze" ~: do
+  "adding portals to hard maze" ~: do
     mazeRes <- parseFromFile (many mazeFileParser) "data/hard.txt"
     portalsRes <- parseFromFile portalFileParser "data/hard_portals.txt"
     case mazeRes of
       Just (mazeString, _) -> do
         let maze = parseMaze mazeString
-        -- print maze
-        -- print "************ adding portals ************"
         case portalsRes of
           Just (portalsList, _) -> do
             let updatedMaze = maze {portals = portalsList}
-            putStrLn "\n"
-            putStrLn $ showMaze updatedMaze
-            -- print updatedMaze
             assert $ length (portals updatedMaze) == 4 && null (portals maze)
+          Nothing -> error "Failed to parse portals file"
+      Nothing -> assert False
+
+test_add_portals_to_maze_medium :: Test
+test_add_portals_to_maze_medium =
+  "adding portals to medium maze" ~: do
+    mazeRes <- parseFromFile (many mazeFileParser) "data/medium.txt"
+    portalsRes <- parseFromFile portalFileParser "data/medium_portals.txt"
+    case mazeRes of
+      Just (mazeString, _) -> do
+        let maze = parseMaze mazeString
+        case portalsRes of
+          Just (portalsList, _) -> do
+            let updatedMaze = maze {portals = portalsList}
+            assert $ length (portals updatedMaze) == 3 && null (portals maze)
           Nothing -> error "Failed to parse portals file"
       Nothing -> assert False
 
@@ -573,11 +571,17 @@ test_all =
         test_get_eligible_coin_coordinates,
         test_random_add_coins_to_maze,
         test_get_eligible_compass_coordinates,
-        test_random_add_compasses_to_maze
+        test_random_add_compasses_to_maze_easy,
+        test_random_add_compasses_to_maze_medium,
+        test_random_add_compasses_to_maze_hard,
+        test_hard_maze_size,
+        test_medium_maze_size,
+        test_add_portals_to_maze_hard,
+        test_add_portals_to_maze_medium
       ]
 
 -- >>> test_all
--- Counts {cases = 14, tried = 14, errors = 0, failures = 0}
+-- Counts {cases = 20, tried = 20, errors = 0, failures = 0}
 
 ------------------------------------------------------------------------------------------
 
@@ -602,16 +606,6 @@ genCell = do
   y <- genYCoordinate
   Cell x y <$> genIsWall
 
-instance Arbitrary Cell where
-  arbitrary :: Gen Cell
-  arbitrary = genCell
-
-  shrink :: Cell -> [Cell]
-  shrink (Cell x y isWall) = [Cell x' y' isWall | (x', y') <- shrink (x, y)]
-
--- >>> QC.generate $ QC.arbitrary :: IO Cell
--- Cell {x = 12, y = 7, isWall = False}
-
 prop_AddCellShouldIncreaseMazeSizeByOne :: Cell -> Bool
 prop_AddCellShouldIncreaseMazeSizeByOne cell =
   let maze = addCell (x cell) (y cell) (isWall cell) test_maze1
@@ -622,119 +616,41 @@ prop_AddCoinShouldIncreaseCoinsSizeByOne cell =
   let maze = addCoin (x cell) (y cell) test_maze1
    in length (coins maze) == length (coins test_maze1) + 1
 
-test_maze :: Maze
-test_maze =
-  Maze
-    { cells =
-        [ Cell {x = 0, y = 0, isWall = False},
-          Cell {x = 0, y = 1, isWall = True},
-          Cell {x = 0, y = 2, isWall = False},
-          Cell {x = 0, y = 3, isWall = True},
-          Cell {x = 0, y = 4, isWall = False},
-          Cell {x = 0, y = 5, isWall = True},
-          Cell {x = 0, y = 6, isWall = True},
-          Cell {x = 0, y = 7, isWall = False},
-          Cell {x = 0, y = 8, isWall = False},
-          Cell {x = 0, y = 9, isWall = False},
-          Cell {x = 0, y = 10, isWall = True},
-          Cell {x = 1, y = 0, isWall = False},
-          Cell {x = 1, y = 1, isWall = False},
-          Cell {x = 1, y = 2, isWall = False},
-          Cell {x = 1, y = 3, isWall = True},
-          Cell {x = 1, y = 4, isWall = False},
-          Cell {x = 1, y = 5, isWall = True},
-          Cell {x = 1, y = 6, isWall = True},
-          Cell {x = 1, y = 7, isWall = True},
-          Cell {x = 1, y = 8, isWall = True},
-          Cell {x = 1, y = 9, isWall = False},
-          Cell {x = 1, y = 10, isWall = True},
-          Cell {x = 2, y = 0, isWall = False},
-          Cell {x = 2, y = 1, isWall = False},
-          Cell {x = 2, y = 2, isWall = False},
-          Cell {x = 2, y = 3, isWall = False},
-          Cell {x = 2, y = 4, isWall = False},
-          Cell {x = 2, y = 5, isWall = False},
-          Cell {x = 2, y = 6, isWall = False},
-          Cell {x = 2, y = 7, isWall = False},
-          Cell {x = 2, y = 8, isWall = False},
-          Cell {x = 2, y = 9, isWall = True},
-          Cell {x = 2, y = 10, isWall = True},
-          Cell {x = 3, y = 0, isWall = True},
-          Cell {x = 3, y = 1, isWall = False},
-          Cell {x = 3, y = 2, isWall = False},
-          Cell {x = 3, y = 3, isWall = True},
-          Cell {x = 3, y = 4, isWall = False},
-          Cell {x = 3, y = 5, isWall = False},
-          Cell {x = 3, y = 6, isWall = False},
-          Cell {x = 3, y = 7, isWall = False},
-          Cell {x = 3, y = 8, isWall = False},
-          Cell {x = 3, y = 9, isWall = True},
-          Cell {x = 3, y = 10, isWall = True},
-          Cell {x = 4, y = 0, isWall = True},
-          Cell {x = 4, y = 1, isWall = True},
-          Cell {x = 4, y = 2, isWall = False},
-          Cell {x = 4, y = 3, isWall = True},
-          Cell {x = 4, y = 4, isWall = True},
-          Cell {x = 4, y = 5, isWall = True},
-          Cell {x = 4, y = 6, isWall = False},
-          Cell {x = 4, y = 7, isWall = True},
-          Cell {x = 4, y = 8, isWall = True},
-          Cell {x = 4, y = 9, isWall = True},
-          Cell {x = 4, y = 10, isWall = True},
-          Cell {x = 5, y = 0, isWall = True},
-          Cell {x = 5, y = 1, isWall = False},
-          Cell {x = 5, y = 2, isWall = True},
-          Cell {x = 5, y = 3, isWall = True},
-          Cell {x = 5, y = 4, isWall = True},
-          Cell {x = 5, y = 5, isWall = True},
-          Cell {x = 5, y = 6, isWall = False},
-          Cell {x = 5, y = 7, isWall = False},
-          Cell {x = 5, y = 8, isWall = False},
-          Cell {x = 5, y = 9, isWall = True},
-          Cell {x = 5, y = 10, isWall = True},
-          Cell {x = 6, y = 0, isWall = False},
-          Cell {x = 6, y = 1, isWall = False},
-          Cell {x = 6, y = 2, isWall = False},
-          Cell {x = 6, y = 3, isWall = True},
-          Cell {x = 6, y = 4, isWall = True},
-          Cell {x = 6, y = 5, isWall = False},
-          Cell {x = 6, y = 6, isWall = False},
-          Cell {x = 6, y = 7, isWall = False},
-          Cell {x = 6, y = 8, isWall = True},
-          Cell {x = 6, y = 9, isWall = True},
-          Cell {x = 6, y = 10, isWall = True},
-          Cell {x = 7, y = 0, isWall = True},
-          Cell {x = 7, y = 1, isWall = True},
-          Cell {x = 7, y = 2, isWall = False},
-          Cell {x = 7, y = 3, isWall = False},
-          Cell {x = 7, y = 4, isWall = False},
-          Cell {x = 7, y = 5, isWall = False},
-          Cell {x = 7, y = 6, isWall = True},
-          Cell {x = 7, y = 7, isWall = False},
-          Cell {x = 7, y = 8, isWall = True},
-          Cell {x = 7, y = 9, isWall = True},
-          Cell {x = 7, y = 10, isWall = True},
-          Cell {x = 8, y = 0, isWall = True},
-          Cell {x = 8, y = 1, isWall = True},
-          Cell {x = 8, y = 2, isWall = True},
-          Cell {x = 8, y = 3, isWall = False},
-          Cell {x = 8, y = 4, isWall = True},
-          Cell {x = 8, y = 5, isWall = False},
-          Cell {x = 8, y = 6, isWall = True},
-          Cell {x = 8, y = 7, isWall = False},
-          Cell {x = 8, y = 8, isWall = True},
-          Cell {x = 8, y = 9, isWall = True},
-          Cell {x = 8, y = 10, isWall = False}
-        ],
-      startPlayerOne = Cell {x = 0, y = 4, isWall = False},
-      startPlayerTwo = Cell {x = 8, y = 5, isWall = False},
-      goal = Cell {x = 2, y = 8, isWall = False},
-      coins = [],
-      compasses = [],
-      portals = [Portal {entrance = Cell {x = 6, y = 0, isWall = False}, exit = Cell {x = 4, y = 7, isWall = False}}, Portal {entrance = Cell {x = 2, y = 5, isWall = False}, exit = Cell {x = 1, y = 0, isWall = False}}],
-      rows = 9,
-      cols = 11
-    }
+prop_AddCompassShouldIncreaseCompassesSizeByOne :: Cell -> Bool
+prop_AddCompassShouldIncreaseCompassesSizeByOne cell =
+  let maze = addCompass (x cell) (y cell) test_maze1
+   in length (compasses maze) == length (compasses test_maze1) + 1
+
+prop_SetStartPlayerOneShouldChangeStartPlayerOne :: Cell -> Bool
+prop_SetStartPlayerOneShouldChangeStartPlayerOne cell =
+  let maze = setStartPlayerOne (x cell) (y cell) test_maze1
+   in startPlayerOne maze == Cell (x cell) (y cell) False
+
+prop_SetStartPlayerTwoShouldChangeStartPlayerTwo :: Cell -> Bool
+prop_SetStartPlayerTwoShouldChangeStartPlayerTwo cell =
+  let maze = setStartPlayerTwo (x cell) (y cell) test_maze1
+   in startPlayerTwo maze == Cell (x cell) (y cell) False
+
+prop_SetGoalShouldChangeGoal :: Cell -> Bool
+prop_SetGoalShouldChangeGoal cell =
+  let maze = setGoal (x cell) (y cell) test_maze1
+   in goal maze == Cell (x cell) (y cell) False
+
+qc :: IO ()
+qc = do
+  putStrLn "QuickCheck tests"
+  putStrLn "Add cell increase maze size by one"
+  QC.quickCheck prop_AddCellShouldIncreaseMazeSizeByOne
+  putStrLn "Add coin increase coins size by one"
+  QC.quickCheck prop_AddCoinShouldIncreaseCoinsSizeByOne
+  putStrLn "Add compass increase compasses size by one"
+  QC.quickCheck prop_AddCompassShouldIncreaseCompassesSizeByOne
+  putStrLn "Set start player one should change start player one"
+  QC.quickCheck prop_SetStartPlayerOneShouldChangeStartPlayerOne
+  putStrLn "Set start player two should change start player two"
+  QC.quickCheck prop_SetStartPlayerTwoShouldChangeStartPlayerTwo
+  putStrLn "Set goal should change goal"
+  QC.quickCheck prop_SetGoalShouldChangeGoal
 
 test_maze1 :: Maze
 test_maze1 =
