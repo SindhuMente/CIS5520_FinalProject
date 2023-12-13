@@ -278,6 +278,28 @@ test_allMethods =
         test_initializeGameState
       ]
 
+-- >>> addCoinsToMazeRandom 4 qcMaze
+-- +---+---+---+---+---+---+---+---+---+---+---+
+
+-- |   | X |   | X | S | X | X |   |   |   | X
+-- +---+---+---+---+---+---+---+---+---+---+---+
+-- |   |   |   | X |   | X | X | X | X |   | X
+-- +---+---+---+---+---+---+---+---+---+---+---+
+-- |   |   |   |   |   | P |   |   | G | X | X
+-- +---+---+---+---+---+---+---+---+---+---+---+
+-- | X |   |   | X |   |   |   |   |   | X | X
+-- +---+---+---+---+---+---+---+---+---+---+---+
+-- | X | X | Q | X | X | X |   | X | X | X | X
+-- +---+---+---+---+---+---+---+---+---+---+---+
+-- | X |   | X | X | X | X |   |   | Q | X | X
+-- +---+---+---+---+---+---+---+---+---+---+---+
+-- | P |   |   | X | X | Q |   |   | X | X | X
+-- +---+---+---+---+---+---+---+---+---+---+---+
+-- | X | X |   |   |   |   | X |   | X | X | X
+-- +---+---+---+---+---+---+---+---+---+---+---+
+-- | X | X | X | Q | X | T | X |   | X | X |
+-- +---+---+---+---+---+---+---+---+---+---+---+
+
 -- >>> test_allMethods
 -- Counts {cases = 61, tried = 61, errors = 0, failures = 0}
 
@@ -429,7 +451,7 @@ prop_actionExpected g MRight c = x (actionsToCell (board g) c MRight) == x c && 
 prop_movePreservesCompassesAndCoins :: Game -> Action -> Cell -> Player -> Bool
 prop_movePreservesCompassesAndCoins g a c p =
   let c' = S.execState (whichMove (actionsToCell (board g) c a) p) g
-   in length (compasses (board c')) <= length (coins (board g)) && length (coins (board c')) <= length (coins (board g))
+   in length (compasses (board c')) <= length (compasses (board g)) && length (coins (board c')) <= length (coins (board g))
 
 -- next 2 props check that taking an action and then taking the reverse action ensures we end up in the inital cell
 -- only for moveOne & collectCoin cases, since compasses & portals are nondeterministic & unidirectional
@@ -468,12 +490,17 @@ prop_coinAddsToScore g c Two =
 qcGameState :: IO ()
 qcGameState = do
   putStrLn "prop_actionExpected"
-  quickCheck (prop_actionExpected easyGame)
+  -- quickCheck (prop_actionExpected easyGame)
+  quickCheck prop_actionExpected
   putStrLn "prop_movePreservesCompassesAndCoins"
-  quickCheck (prop_movePreservesCompassesAndCoins easyGame)
+  -- quickCheck (prop_movePreservesCompassesAndCoins easyGame)
+  quickCheck prop_movePreservesCompassesAndCoins
   putStrLn "prop_moveOneBackExpected"
-  quickCheck (prop_moveOneBackExpected easyGame)
+  -- quickCheck (prop_moveOneBackExpected easyGame)
+  quickCheck prop_moveOneBackExpected
   putStrLn "prop_moveCoinBackExpected"
-  quickCheck (prop_moveCoinBackExpected easyGame)
+  -- quickCheck (prop_moveCoinBackExpected easyGame)
+  quickCheck prop_moveCoinBackExpected
   putStrLn "prop_coinAddsToScore"
-  quickCheck (prop_coinAddsToScore easyGame)
+  -- quickCheck (prop_coinAddsToScore easyGame)
+  quickCheck prop_coinAddsToScore

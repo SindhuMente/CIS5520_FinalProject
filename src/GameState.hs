@@ -46,13 +46,136 @@ instance Show Player where
   show One = "One (S)"
   show Two = "Two (T)"
 
+instance Arbitrary Game where
+  arbitrary :: Gen Game
+  arbitrary = genMaze >>= \x -> return (initializeGameState initialGame x)
+  shrink :: Game -> [Game]
+  shrink g = [g]
+
+genMaze :: Gen Maze
+genMaze =
+  let updatedCoins = QC.chooseInt (0, 4) >>= \x -> return (addCoinsToMazeRandom x qcMaze)
+   in QC.chooseInt (0, 4) >>= \x -> updatedCoins >>= \y -> return (addCompassesToMazeRandom x y)
+
 data Game = Game {board :: Maze, current :: Player, playerInfo :: PlayerInfo} deriving (Eq, Show)
 
 data Attributes = Attributes {numPoints :: Int, position :: Cell} deriving (Eq, Show)
 
 data PlayerInfo = PlayerInfo {player1 :: Attributes, player2 :: Attributes} deriving (Eq, Show)
 
-data End = Win Player | Lose Player deriving (Eq, Show)
+qcMaze :: Maze
+qcMaze =
+  Maze
+    { cells =
+        [ Cell {x = 0, y = 0, isWall = False},
+          Cell {x = 0, y = 1, isWall = True},
+          Cell {x = 0, y = 2, isWall = False},
+          Cell {x = 0, y = 3, isWall = True},
+          Cell {x = 0, y = 4, isWall = False},
+          Cell {x = 0, y = 5, isWall = True},
+          Cell {x = 0, y = 6, isWall = True},
+          Cell {x = 0, y = 7, isWall = False},
+          Cell {x = 0, y = 8, isWall = False},
+          Cell {x = 0, y = 9, isWall = False},
+          Cell {x = 0, y = 10, isWall = True},
+          Cell {x = 1, y = 0, isWall = False},
+          Cell {x = 1, y = 1, isWall = False},
+          Cell {x = 1, y = 2, isWall = False},
+          Cell {x = 1, y = 3, isWall = True},
+          Cell {x = 1, y = 4, isWall = False},
+          Cell {x = 1, y = 5, isWall = True},
+          Cell {x = 1, y = 6, isWall = True},
+          Cell {x = 1, y = 7, isWall = True},
+          Cell {x = 1, y = 8, isWall = True},
+          Cell {x = 1, y = 9, isWall = False},
+          Cell {x = 1, y = 10, isWall = True},
+          Cell {x = 2, y = 0, isWall = False},
+          Cell {x = 2, y = 1, isWall = False},
+          Cell {x = 2, y = 2, isWall = False},
+          Cell {x = 2, y = 3, isWall = False},
+          Cell {x = 2, y = 4, isWall = False},
+          Cell {x = 2, y = 5, isWall = False},
+          Cell {x = 2, y = 6, isWall = False},
+          Cell {x = 2, y = 7, isWall = False},
+          Cell {x = 2, y = 8, isWall = False},
+          Cell {x = 2, y = 9, isWall = True},
+          Cell {x = 2, y = 10, isWall = True},
+          Cell {x = 3, y = 0, isWall = True},
+          Cell {x = 3, y = 1, isWall = False},
+          Cell {x = 3, y = 2, isWall = False},
+          Cell {x = 3, y = 3, isWall = True},
+          Cell {x = 3, y = 4, isWall = False},
+          Cell {x = 3, y = 5, isWall = False},
+          Cell {x = 3, y = 6, isWall = False},
+          Cell {x = 3, y = 7, isWall = False},
+          Cell {x = 3, y = 8, isWall = False},
+          Cell {x = 3, y = 9, isWall = True},
+          Cell {x = 3, y = 10, isWall = True},
+          Cell {x = 4, y = 0, isWall = True},
+          Cell {x = 4, y = 1, isWall = True},
+          Cell {x = 4, y = 2, isWall = False},
+          Cell {x = 4, y = 3, isWall = True},
+          Cell {x = 4, y = 4, isWall = True},
+          Cell {x = 4, y = 5, isWall = True},
+          Cell {x = 4, y = 6, isWall = False},
+          Cell {x = 4, y = 7, isWall = True},
+          Cell {x = 4, y = 8, isWall = True},
+          Cell {x = 4, y = 9, isWall = True},
+          Cell {x = 4, y = 10, isWall = True},
+          Cell {x = 5, y = 0, isWall = True},
+          Cell {x = 5, y = 1, isWall = False},
+          Cell {x = 5, y = 2, isWall = True},
+          Cell {x = 5, y = 3, isWall = True},
+          Cell {x = 5, y = 4, isWall = True},
+          Cell {x = 5, y = 5, isWall = True},
+          Cell {x = 5, y = 6, isWall = False},
+          Cell {x = 5, y = 7, isWall = False},
+          Cell {x = 5, y = 8, isWall = False},
+          Cell {x = 5, y = 9, isWall = True},
+          Cell {x = 5, y = 10, isWall = True},
+          Cell {x = 6, y = 0, isWall = False},
+          Cell {x = 6, y = 1, isWall = False},
+          Cell {x = 6, y = 2, isWall = False},
+          Cell {x = 6, y = 3, isWall = True},
+          Cell {x = 6, y = 4, isWall = True},
+          Cell {x = 6, y = 5, isWall = False},
+          Cell {x = 6, y = 6, isWall = False},
+          Cell {x = 6, y = 7, isWall = False},
+          Cell {x = 6, y = 8, isWall = True},
+          Cell {x = 6, y = 9, isWall = True},
+          Cell {x = 6, y = 10, isWall = True},
+          Cell {x = 7, y = 0, isWall = True},
+          Cell {x = 7, y = 1, isWall = True},
+          Cell {x = 7, y = 2, isWall = False},
+          Cell {x = 7, y = 3, isWall = False},
+          Cell {x = 7, y = 4, isWall = False},
+          Cell {x = 7, y = 5, isWall = False},
+          Cell {x = 7, y = 6, isWall = True},
+          Cell {x = 7, y = 7, isWall = False},
+          Cell {x = 7, y = 8, isWall = True},
+          Cell {x = 7, y = 9, isWall = True},
+          Cell {x = 7, y = 10, isWall = True},
+          Cell {x = 8, y = 0, isWall = True},
+          Cell {x = 8, y = 1, isWall = True},
+          Cell {x = 8, y = 2, isWall = True},
+          Cell {x = 8, y = 3, isWall = False},
+          Cell {x = 8, y = 4, isWall = True},
+          Cell {x = 8, y = 5, isWall = False},
+          Cell {x = 8, y = 6, isWall = True},
+          Cell {x = 8, y = 7, isWall = False},
+          Cell {x = 8, y = 8, isWall = True},
+          Cell {x = 8, y = 9, isWall = True},
+          Cell {x = 8, y = 10, isWall = False}
+        ],
+      startPlayerOne = Cell {x = 0, y = 4, isWall = False},
+      startPlayerTwo = Cell {x = 8, y = 5, isWall = False},
+      goal = Cell {x = 2, y = 8, isWall = False},
+      coins = [],
+      compasses = [],
+      portals = [Portal {entrance = Cell {x = 6, y = 0, isWall = False}, exit = Cell {x = 4, y = 7, isWall = False}}, Portal {entrance = Cell {x = 2, y = 5, isWall = False}, exit = Cell {x = 1, y = 0, isWall = False}}],
+      rows = 9,
+      cols = 11
+    }
 
 ------------------------------------------------------------------------------------------
 
@@ -327,6 +450,7 @@ playGame :: Game -> IO ()
 playGame emptyGame = do
   putStrLn "please enter your desired difficulty level (easy, medium, or hard)"
   putStr ">>> "
+  hFlush stdout
   difficulty <- getLine
   case difficulty of -- extract mapping from difficulty to num coins/compasses
     "easy" -> do
@@ -351,18 +475,16 @@ playGame emptyGame = do
           case portalsRes of
             Just (portalsList, _) -> do
               let maze = parseMaze rawMaze
-               in let updatedMaze = maze {portals = portalsList}
-                   in let updatedCoins = P.addCoinsToMazeRandom numCoins updatedMaze
-                       in let updatedCompasses = P.addCompassesToMazeRandom numCompasses updatedCoins
-                           in let game = initializeGameState emptyGame updatedCompasses
-                               in do
-                                    go game
+              let updatedMaze = maze {portals = portalsList}
+              let updatedCoins = P.addCoinsToMazeRandom numCoins updatedMaze
+              let updatedCompasses = P.addCompassesToMazeRandom numCompasses updatedCoins
+              let game = initializeGameState emptyGame updatedCompasses
+               in do
+                    go game
             _ -> do
               putStrLn "error loading maze, please try again later"
-              return ()
         _ -> do
           putStrLn "error loading maze, please try again later"
-          return ()
     -- recursive function that handle IO -> terminates when user quits or if a user wins
     go game =
       do
@@ -375,6 +497,7 @@ playGame emptyGame = do
               putStrLn (printPlayerAttributes (player2 (playerInfo game)))
               putStrLn "-------------------------------\n"
               putStr ("Player " ++ show curPlayer ++ "'s Turn >>> ")
+              hFlush stdout
               dir <- getLine
               case dir of
                 "l" -> makeMove MLeft curPlayer game
@@ -401,13 +524,11 @@ playGame emptyGame = do
                           if c == goal (board g)
                             then do
                               putStrLn ("Congrats Player " ++ show p ++ "! You Won the TriWizard Cup!") -- cur player wins!
-                              return ()
                             else do
                               let g' = S.execState (whichMove c p) g
                                in go g'
                         else do
                           putStrLn "something went wrong, please try again later" -- do something if player isn't current
-                          return ()
                 else do
                   putStrLn "you are trying to move outside of the maze, please choose a valid direction" -- error trying to move outside of board
                   go g
