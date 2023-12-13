@@ -37,8 +37,8 @@ We initially thought of using the Dfs module but ended up not needing it because
 randomly generated an entire mazes, but rather portions of it such as tokens.
 
 ## Compilation & running instructions
-To start the game and play the game:
-- `stack ghci src/GameState.hs`
-- type `startGame` and press enter
+- This project compiles with `stack build`
+- You can run the game with `stack run`
+- You can run the tests with `stack test`
 
-To run tests:
+Finally, you can start a REPL with stack ghci.
