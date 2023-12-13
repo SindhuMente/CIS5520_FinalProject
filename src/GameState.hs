@@ -402,24 +402,9 @@ playGame emptyGame = do
                             then do
                               putStrLn ("Congrats Player " ++ show p ++ "! You Won the TriWizard Cup!") -- cur player wins!
                               return ()
-                            else
-                              if c `elem` coins (board g)
-                                then do
-                                  let g' = S.execState (collectCoin c p) g
-                                   in go g'
-                                else
-                                  if c `elem` getPortalEntrances (board g)
-                                    then do
-                                      let g' = S.execState (enterPortal c p) g
-                                       in go g'
-                                    else
-                                      if c `elem` compasses (board g)
-                                        then do
-                                          let g' = S.execState (collectCompass c p) g
-                                           in go g'
-                                        else do
-                                          let g' = S.execState (moveOne c p) g
-                                           in go g'
+                            else do
+                              let g' = S.execState (whichMove c p) g
+                               in go g'
                         else do
                           putStrLn "something went wrong, please try again later" -- do something if player isn't current
                           return ()
@@ -489,8 +474,8 @@ testGame =
 
 test_moveOne :: Test
 test_moveOne =
-  "moveOne tests"
-    ~: TestList
+  "moveOne tests" ~:
+    TestList
       [ player1 (playerInfo (S.execState (moveOne Cell {x = 2, y = 1, isWall = False} One) testGame)) ~?= Attributes {numPoints = 0, position = Cell {x = 2, y = 1, isWall = False}},
         player2 (playerInfo (S.execState (moveOne Cell {x = 1, y = 3, isWall = False} Two) testGame)) ~?= Attributes {numPoints = 0, position = Cell {x = 1, y = 3, isWall = False}},
         current (S.execState (moveOne Cell {x = 2, y = 1, isWall = False} One) testGame) ~?= Two,
@@ -499,8 +484,8 @@ test_moveOne =
 
 test_enterPortal :: Test
 test_enterPortal =
-  "enterPortal tests"
-    ~: TestList
+  "enterPortal tests" ~:
+    TestList
       [ player1 (playerInfo (S.execState (enterPortal Cell {x = 2, y = 0, isWall = False} One) testGame)) ~?= Attributes {numPoints = 0, position = Cell {x = 0, y = 1, isWall = False}},
         player2 (playerInfo (S.execState (enterPortal Cell {x = 2, y = 0, isWall = False} Two) testGame)) ~?= Attributes {numPoints = 0, position = Cell {x = 0, y = 1, isWall = False}},
         current (S.execState (enterPortal Cell {x = 2, y = 0, isWall = False} One) testGame) ~?= Two,
@@ -509,16 +494,16 @@ test_enterPortal =
 
 test_fetchPortal :: Test
 test_fetchPortal =
-  "fetchPortal tests"
-    ~: TestList
+  "fetchPortal tests" ~:
+    TestList
       [ fetchPortal testGame Cell {x = 2, y = 0, isWall = False} ~?= Cell {x = 0, y = 1, isWall = False},
         fetchPortal testGame Cell {x = 2, y = 3, isWall = False} ~?= Cell {x = -1, y = -1, isWall = True}
       ]
 
 test_collectCoin :: Test
 test_collectCoin =
-  "collectCoin tests"
-    ~: TestList
+  "collectCoin tests" ~:
+    TestList
       [ player1 (playerInfo (S.execState (collectCoin Cell {x = 2, y = 2, isWall = False} One) testGame)) ~?= Attributes {numPoints = 1, position = Cell {x = 2, y = 2, isWall = False}},
         player2 (playerInfo (S.execState (collectCoin Cell {x = 2, y = 2, isWall = False} Two) testGame)) ~?= Attributes {numPoints = 1, position = Cell {x = 2, y = 2, isWall = False}},
         current (S.execState (collectCoin Cell {x = 2, y = 2, isWall = False} One) testGame) ~?= Two,
@@ -528,16 +513,16 @@ test_collectCoin =
 
 test_removeCoin :: Test
 test_removeCoin =
-  "removeCoin tests"
-    ~: TestList
+  "removeCoin tests" ~:
+    TestList
       [ coins (removeCoin (board testGame) Cell {x = 2, y = 2, isWall = False}) ~?= [],
         coins (removeCoin (board testGame) Cell {x = 2, y = 1, isWall = False}) ~?= [Cell {x = 2, y = 2, isWall = False}]
       ]
 
 test_collectCompass :: Test
 test_collectCompass =
-  "collectCompass tests"
-    ~: TestList
+  "collectCompass tests" ~:
+    TestList
       [ player1 (playerInfo (S.execState (collectCompass Cell {x = 1, y = 1, isWall = False} One) testGame)) ~?= Attributes {numPoints = 1, position = Cell {x = 0, y = 1, isWall = False}},
         player2 (playerInfo (S.execState (collectCompass Cell {x = 1, y = 1, isWall = False} Two) testGame)) ~?= Attributes {numPoints = 1, position = Cell {x = 0, y = 1, isWall = False}},
         current (S.execState (collectCompass Cell {x = 1, y = 1, isWall = False} One) testGame) ~?= Two,
@@ -547,8 +532,8 @@ test_collectCompass =
 
 test_pointMe :: Test
 test_pointMe =
-  "pointMe tests"
-    ~: TestList
+  "pointMe tests" ~:
+    TestList
       [ pointMe (board testGame) Cell {x = 1, y = 1, isWall = False} One ~?= Cell {x = 0, y = 1, isWall = False},
         pointMe (board testGame) Cell {x = 2, y = 2, isWall = False} Two ~?= Cell {x = 1, y = 2, isWall = False},
         pointMe (board testGame) Cell {x = 2, y = 0, isWall = False} One ~?= Cell {x = 2, y = 0, isWall = False}
@@ -556,16 +541,16 @@ test_pointMe =
 
 test_filterNeighbors :: Test
 test_filterNeighbors =
-  "filterNeighbors tests"
-    ~: TestList
+  "filterNeighbors tests" ~:
+    TestList
       [ filterNeighbors (board testGame) [(0, 1), (2, 1), (1, 0), (1, 2)] ~?= [(0, 1), (2, 1), (1, 2)],
         filterNeighbors (board testGame) [] ~?= []
       ]
 
 test_extractBest :: Test
 test_extractBest =
-  "extractBest tests"
-    ~: TestList
+  "extractBest tests" ~:
+    TestList
       [ extractBest (board testGame) [(0, 1), (2, 1), (1, 0), (1, 2)] ~?= Cell {x = 0, y = 1, isWall = False},
         extractBest (board testGame) [] ~?= Cell {x = -1, y = -1, isWall = True},
         extractBest (board testGame) [(2, 0)] ~?= Cell {x = 2, y = 0, isWall = False}
@@ -573,8 +558,8 @@ test_extractBest =
 
 test_getManhattanDistance :: Test
 test_getManhattanDistance =
-  "getManhattanDistance tests"
-    ~: TestList
+  "getManhattanDistance tests" ~:
+    TestList
       [ getManhattanDistance (1, 1) (0, 0) ~?= 2,
         getManhattanDistance (2, 2) (2, 2) ~?= 0,
         getManhattanDistance (2, 0) (0, 1) ~?= 3
@@ -582,8 +567,8 @@ test_getManhattanDistance =
 
 test_getMin :: Test
 test_getMin =
-  "getMin tests"
-    ~: TestList
+  "getMin tests" ~:
+    TestList
       [ getMin [((0, 0), 100), ((2, 1), 10), ((3, 2), 1), ((1, 3), 4), ((0, 2), 8)] ~?= Cell {x = 3, y = 2, isWall = False},
         getMin [((2, 1), 10)] ~?= Cell {x = 2, y = 1, isWall = False},
         getMin [] ~?= Cell {x = -1, y = -1, isWall = True},
@@ -592,16 +577,16 @@ test_getMin =
 
 test_removeCompass :: Test
 test_removeCompass =
-  "removeCompass tests"
-    ~: TestList
+  "removeCompass tests" ~:
+    TestList
       [ compasses (removeCompass (board testGame) Cell {x = 1, y = 1, isWall = False}) ~?= [],
         compasses (removeCompass (board testGame) Cell {x = 2, y = 1, isWall = False}) ~?= [Cell {x = 1, y = 1, isWall = False}]
       ]
 
 test_whichMove :: Test
 test_whichMove =
-  "whichMove tests"
-    ~: TestList
+  "whichMove tests" ~:
+    TestList
       [ player1 (playerInfo (S.execState (whichMove Cell {x = 1, y = 1, isWall = False} One) testGame)) ~?= Attributes {numPoints = 1, position = Cell {x = 0, y = 1, isWall = False}},
         player2 (playerInfo (S.execState (whichMove Cell {x = 2, y = 2, isWall = False} Two) testGame)) ~?= Attributes {numPoints = 1, position = Cell {x = 2, y = 2, isWall = False}},
         player1 (playerInfo (S.execState (whichMove Cell {x = 2, y = 0, isWall = False} One) testGame)) ~?= Attributes {numPoints = 0, position = Cell {x = 0, y = 1, isWall = False}},
@@ -610,15 +595,15 @@ test_whichMove =
 
 test_getPortalEntrances :: Test
 test_getPortalEntrances =
-  "getPortalEntrances tests"
-    ~: TestList
+  "getPortalEntrances tests" ~:
+    TestList
       [ getPortalEntrances (board testGame) ~?= [Cell {x = 2, y = 0, isWall = False}]
       ]
 
 test_updateInfo :: Test
 test_updateInfo =
-  "updatePosition tests"
-    ~: TestList
+  "updatePosition tests" ~:
+    TestList
       [ updateInfo One (playerInfo testGame) Cell {x = 2, y = 1, isWall = False} False ~?= (playerInfo testGame) {player1 = Attributes {numPoints = 0, position = Cell {x = 2, y = 1, isWall = False}}},
         updateInfo Two (playerInfo testGame) Cell {x = 1, y = 3, isWall = False} False ~?= (playerInfo testGame) {player2 = Attributes {numPoints = 0, position = Cell {x = 1, y = 3, isWall = False}}},
         updateInfo One (playerInfo testGame) Cell {x = 1, y = 1, isWall = False} True ~?= (playerInfo testGame) {player1 = Attributes {numPoints = 1, position = Cell {x = 1, y = 1, isWall = False}}},
@@ -627,16 +612,16 @@ test_updateInfo =
 
 test_getCellWallVal :: Test
 test_getCellWallVal =
-  "getCellWallVal tests"
-    ~: TestList
+  "getCellWallVal tests" ~:
+    TestList
       [ getCellWallVal (1, 1) (board testGame) ~?= False,
         getCellWallVal (3, 0) (board testGame) ~?= True
       ]
 
 test_updatePlayerState :: Test
 test_updatePlayerState =
-  "updatePlayerState tests"
-    ~: TestList
+  "updatePlayerState tests" ~:
+    TestList
       [ startPlayerOne (board (S.execState (updatePlayerState One) testGame {playerInfo = (playerInfo testGame) {player1 = Attributes {numPoints = 0, position = Cell {x = 0, y = 1, isWall = False}}}})) ~?= Cell {x = 0, y = 1, isWall = False},
         startPlayerTwo (board (S.execState (updatePlayerState Two) testGame {playerInfo = (playerInfo testGame) {player2 = Attributes {numPoints = 0, position = Cell {x = 0, y = 1, isWall = False}}}})) ~?= Cell {x = 0, y = 1, isWall = False},
         startPlayerOne (board (S.execState (updatePlayerState Two) testGame {playerInfo = (playerInfo testGame) {player2 = Attributes {numPoints = 0, position = Cell {x = 0, y = 1, isWall = False}}}})) ~?= Cell {x = 3, y = 1, isWall = False},
@@ -648,8 +633,8 @@ test_updatePlayerState =
 
 test_actionsToCell :: Test
 test_actionsToCell =
-  "actionsToCell tests"
-    ~: TestList
+  "actionsToCell tests" ~:
+    TestList
       [ actionsToCell (board testGame) Cell {x = 2, y = 2, isWall = False} MUp ~?= Cell {x = 1, y = 2, isWall = False},
         actionsToCell (board testGame) Cell {x = 2, y = 2, isWall = False} MDown ~?= Cell {x = 3, y = 2, isWall = False},
         actionsToCell (board testGame) Cell {x = 2, y = 2, isWall = False} MLeft ~?= Cell {x = 2, y = 1, isWall = False},
@@ -658,16 +643,16 @@ test_actionsToCell =
 
 test_extractPosition :: Test
 test_extractPosition =
-  "extractPosition tests"
-    ~: TestList
+  "extractPosition tests" ~:
+    TestList
       [ extractPosition One testGame ~?= Cell {x = 3, y = 1, isWall = False},
         extractPosition Two testGame ~?= Cell {x = 0, y = 3, isWall = False}
       ]
 
 test_initializeGameState :: Test
 test_initializeGameState =
-  "initializeGameState tests"
-    ~: TestList
+  "initializeGameState tests" ~:
+    TestList
       [ initializeGameState initialGame (board testGame) ~?= testGame
       ]
 
