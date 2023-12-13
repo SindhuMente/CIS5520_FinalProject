@@ -1,3 +1,4 @@
+import GameStateTest
 import Lib
 import MazeTest
 import Test.HUnit
@@ -10,4 +11,10 @@ main = do
   putStrLn "\n"
   putStrLn "--------- MAZE QUICKCHECK TESTS ... ---------"
   MazeTest.qc
+  putStrLn "Done!"
+  putStrLn "--------- GAME STATE HUNIT TESTS ... ---------"
+  GameStateTest.test_allMethods
+  putStrLn "\n"
+  putStrLn "--------- GAME STATE QUICKCHECK TESTS ... ---------"
+  GameStateTest.qcGameState
   putStrLn "Done!"
