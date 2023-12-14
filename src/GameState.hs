@@ -54,7 +54,7 @@ instance Arbitrary Game where
 
 genMaze :: Gen Maze
 genMaze =
-  let updatedCoins = QC.chooseInt (0, 4) >>= \x -> return (addCoinsToMazeRandom x qcMaze)
+  let updatedCoins = QC.chooseInt (0, 4) >>= \l -> return (addCoinsToMazeRandom l qcMaze)
    in QC.chooseInt (0, 4) >>= \x -> updatedCoins >>= \y -> return (addCompassesToMazeRandom x y)
 
 data Game = Game {board :: Maze, current :: Player, playerInfo :: PlayerInfo} deriving (Eq, Show)
